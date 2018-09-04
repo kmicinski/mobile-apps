@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Exam 1</title>
+  <meta name="description" content="This is Exam 1 for CMSC 311. This exam contains 105 points. It will begraded out of 100.">
+
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/exams/1">
+  <link rel="alternate" type="application/rss+xml" title="CS107" href="http://localhost:4000/feed.xml">
+</head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href=http://localhost:4000/>CS107</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/assignments/">Assignments</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/blog/">Posts</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/resources">Resources</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/schedule/">Schedule</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/syllabus/">Syllabus</a>
+          
+        
+      </div>
+    </nav>
+
+  </div>
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Exam 1</h1>
+    <h3><b>Project due date: <time datetime="2018-03-18T00:00:00-04:00">Mar 18,
+    2018 (5:59PM Eastern)</time></b></h3>
+  </header>
+
+  <div class="post-content writeup-content" itemprop="articleBody">
+    <p>This is Exam 1 for CMSC 311. This exam contains 105 points. It will be
+graded out of 100.</p>
+
+<p>You may write your answers in whichever way you want: printing this
+exam and writing on paper, writing inside of this document,
+typesetting solutions in latex, etc…</p>
+
+<p>All I care is that you do the following:</p>
+
+<ul>
+  <li>Don’t Google for any of the answers online</li>
+  <li>Take no more than 8 hours on the test</li>
+  <li>Cite any sources you use</li>
+</ul>
+
+<p>You are allowed to use the internet under the following circumstances:
+you are accessing a manual for a specific program or a reference we’ve
+looked up in class. For example, you may look up the GDB manual and
+x86 instruction call reference, but you may <em>not</em> look up how to find
+the base address of a function using GDB on StackOverflow. If you are
+in doubt, write me an email. In other words, you may not Google for
+answers on-demand.</p>
+
+<ul>
+  <li>
+    <p>(10 points) Define, compare, and contrast probabilistic defenses
+versus deterministic defenses. Give at least one example of each. Are
+they both useful?</p>
+  </li>
+  <li>
+    <p>(10 points) This question has two subparts.</p>
+
+    <ul>
+      <li>
+        <p>5/10 points: Give an example of a small snippet of code that has a
+spatial memory safety bug.</p>
+      </li>
+      <li>
+        <p>5/10 points: Describe under what circumstances (perhaps but not
+necessarily using example code) a program would exhibit a temporal
+memory safety bug.</p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="stack-smashing--buffer-overflows">(Stack Smashing / Buffer Overflows)</h4>
+
+<p>Consider the following piece of code:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Assume that the address of `shellcode` without ASLR is 0x100000000000ff00
+char shellcode[] = 
+"\x48\x31\xd2"                                  // xor    %rdx, %rdx
+"\x48\xbb\x2f\x2f\x62\x69\x6e\x2f\x73\x68"      // mov	$0x68732f6e69622f2f, %rbx
+"\x48\xc1\xeb\x08"                              // shr    $0x8, %rbx
+"\x53"                                          // push   %rbx
+"\x48\x89\xe7"                                  // mov    %rsp, %rdi
+"\x50"                                          // push   %rax
+"\x57"                                          // push   %rdi
+"\x48\x89\xe6"                                  // mov    %rsp, %rsi
+"\xb0\x3b"                                      // mov    $0x3b, %al
+"\x0f\x05";                                     // syscall
+
+char *foo(int x, char *z) {
+  // Assume that `buffer`'s address is 0x200000000000ff00
+  // Assume that the saved instruction pointer is stored at 0x200000000000ff20
+  char buffer[8];       // Line A
+  // Line B
+  while (x &gt; 0) {
+    buffer[x] = z[x];
+    x--;
+  }
+}
+
+int main(int argc, char **argv) {
+  char *hello = foo(strlen(argv[1]), argv[1]);
+  // ...
+  // You will describe something here.
+  // 
+  return 0;
+}
+</code></pre></div></div>
+
+<p>To simplify your task in the following, assume that you can call the
+program with binary command-line arguments. In other words, assume
+that you can give the program a command-line argument containing the
+byte 0 (even though you couldn’t typically because that’s the end of a
+C string).</p>
+
+<ul>
+  <li>
+    <p>(5 Points) Give me command line arguments to the program that would cause it to
+crash.</p>
+  </li>
+  <li>
+    <p>(10 Points) (Stack smashing) For now, assume that ASLR has been turned
+off in our system. This means that each time the program starts, the
+static data segment, code segment, stack, etc.. will all get the same
+value each time the program is run. For this problem, assume that the
+buffer <code class="highlighter-rouge">shellcode</code> is located at address <code class="highlighter-rouge">0x10000000ffaa0000</code>.</p>
+  </li>
+</ul>
+
+<p>Describe an input that would cause the program to execute the code in
+<code class="highlighter-rouge">shellcode</code>.</p>
+
+<h4 id="payload-injection">Payload injection</h4>
+
+<ul>
+  <li>
+    <p>(10 points) Now assume that the <code class="highlighter-rouge">shellcode</code> variable is removed from
+the program. We can’t play the same trick as in the last
+problem. Instead, we must inject the shellcode via the program’s
+input. You may still assume that ASLR and NX are turned off, but for
+this problem, assume that the base address of <code class="highlighter-rouge">buffer</code> is
+<code class="highlighter-rouge">0x200000000000ff00</code>.` Describe an input that would inject the
+shellcode and redirect execution to it.</p>
+  </li>
+  <li>
+    <p>(10 points) How would you change the program to eliminate this attack?</p>
+  </li>
+  <li>
+    <p>(5 points) Describe what the NX bit does. Why does it make it hard to
+launch the attack described in problem 5?</p>
+  </li>
+</ul>
+
+<h4 id="nop-sleds">NOP-sleds</h4>
+
+<p>(5 points) A “NOP-sled” is a long sequence of NOPs before a payload
+that is inserted into the program.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"\x66\x90"
+"\x66\x90"
+"\x66\x90"
+... thousands more ...
+"\x66\x90"
+"\x66\x90"
+"\x48\x31\xd2"                                  // xor    %rdx, %rdx
+"\x48\xbb\x2f\x2f\x62\x69\x6e\x2f\x73\x68"      // mov	$0x68732f6e69622f2f, %rbx
+"\x48\xc1\xeb\x08"                              // shr    $0x8, %rbx
+...
+</code></pre></div></div>
+
+<ul>
+  <li>Describe why a NOP-sled might be useful in the presence of ASLR or in
+the scenario in which you weren’t certain where the program would be
+loaded (e.g., because of variations in environment variables).</li>
+</ul>
+
+<h4 id="heap-exploits">Heap exploits</h4>
+
+<p>Assume that we had the following structure.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>struct person {
+    // Address base+0
+    unsigned int is_administrator;
+    // Address base+4
+    char username[50];
+    // Address base+56
+    char *(*login_shell)(char *);  // Pointer to C function that accepts a
+                                   // string (char *) as an argument and returns a string (char *)
+}
+</code></pre></div></div>
+
+<p>Assume the compiler lays out structured data for <code class="highlighter-rouge">person</code> in the
+manner described in the comments. I.e., if the base address of the
+struct is at address <code class="highlighter-rouge">0xAA00</code>, then the address of the <code class="highlighter-rouge">login_shell</code>
+variable will be stored at <code class="highlighter-rouge">0xAA38</code>. You may assume the function
+<code class="highlighter-rouge">system</code> is stored at the (8-byte) address <code class="highlighter-rouge">0x000000AAAAAA0000</code>.</p>
+
+<p>Assume that after you are logged in, the program calls the function
+pointed to by <code class="highlighter-rouge">login_shell</code> with the data stored in <code class="highlighter-rouge">username</code>.</p>
+
+<ul>
+  <li>(10 points) Describe what you could put in <code class="highlighter-rouge">username</code> so that you
+effected a call to <code class="highlighter-rouge">system("/bin/sh")</code>.</li>
+</ul>
+
+<h4 id="aslr--attack-theory">ASLR / attack theory</h4>
+
+<ul>
+  <li>(10 points) Assume that ASLR is enabled.  Are stack-canaries and
+other memory-safety controls still relevant? If they are still
+relevant, write an example program which demonstrates a vulnerability
+that would exist even with ASLR. If not, explain how ASLR fixes the
+problem stack canaries solve. (Big Hint: think about data-only
+attacks, consider writing something like a password-checking program
+that calls a function to copy a string.)</li>
+</ul>
+
+<h4 id="control-flow-integrity">Control-flow integrity</h4>
+
+<p>Consider the following program:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void foo() {
+  char buf[200];
+  // .. 
+  bar(); // Line 1
+  // .. 
+}
+
+void bar() {
+  char buf2[100];
+  // .. 
+  return; // Line 3;
+}
+
+void system() {
+  // .. 
+}
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p>(10 points) Control-flow integrity is a compile-time (or runtime, in
+some cases) instrumentation of the program.</p>
+
+    <ul>
+      <li>
+        <p>2/10 points: What does control-flow integrity do, and why is it
+helpful?</p>
+      </li>
+      <li>4/10 points: In the above program, how would the following be
+transformed:
+        <ul>
+          <li>The call to bar() at line 1</li>
+          <li>The return from bar() at line 3</li>
+        </ul>
+      </li>
+      <li>
+        <p>2/10 points: How does CFI ensure the program can’t call system?</p>
+      </li>
+      <li>2/10 points: Assume we had provably perfect CFI. Would we have then
+ensured memory-safety?</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="systems-security-concepts">Systems Security Concepts</h4>
+
+<ul>
+  <li>(5 points) Programs that are Set-UID inherit the privileges of their owners when
+they are called. For example, the program <code class="highlighter-rouge">ping</code> uses raw ICMP sockets
+to check the status of remote hosts, which requires the program to
+have the privileges of the <code class="highlighter-rouge">root</code> user.</li>
+</ul>
+
+<p>In 3-6 sentences, detail why such Set-UID programs warrant extra
+attention from us.</p>
+
+<ul>
+  <li>(5 points) Consider that Process A contains secret data somewhere in its memory
+space. For example, maybe it is a server process that stores grades
+for the course. Sometimes, Process A might want to run untrusted code
+(e.g., downloaded from the internet). If done by naively running code
+in the same process space, this lead to security vulnerabilities,
+because the untrusted code will have accesss to all of process A’s
+memory.</li>
+</ul>
+
+<p>What operating-system principle could be used to allow process A to
+run this untrusted code in a way so that the untrusted code does not
+gain access to process A’s data?</p>
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    
+
+    <!-- <h2 class="footer-heading">CS107</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>CS107</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>CS107</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+<script src=http://localhost:4000/bower_components/jquery/dist/jquery.min.js></script>
+<script src=http://localhost:4000/bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js></script>
+
+
+  </body>
+
+</html>

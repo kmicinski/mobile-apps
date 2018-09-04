@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Project 1G: Implementing a File Server</title>
+  <meta name="description" content="Caution! This code will be graded on the virtual machine for thecourse. If your code does not run on that virtual machine, you willnot be counted as receivin...">
+
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/project/2">
+  <link rel="alternate" type="application/rss+xml" title="CS107" href="http://localhost:4000/feed.xml">
+</head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href=http://localhost:4000/>CS107</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/assignments/">Assignments</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/blog/">Posts</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/resources">Resources</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/schedule/">Schedule</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/syllabus/">Syllabus</a>
+          
+        
+      </div>
+    </nav>
+
+  </div>
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Project 1G: Implementing a File Server</h1>
+    <h3><b>Project due date: <time datetime="2018-02-25T00:00:00-05:00">Feb 25,
+    2018 (5:59PM Eastern)</time></b></h3>
+  </header>
+
+  <div class="post-content writeup-content" itemprop="articleBody">
+    <p><strong>Caution!</strong> This code will be graded on the virtual machine for the
+course. If your code does not run on that virtual machine, you will
+not be counted as receiving credit.</p>
+
+<p>In this project, you’ll implement a web application that serves and
+retrieves files. Part of this server was implemented in the previous
+project, but it didn’t actually do the work of storing files on disk
+and properly responding to HTTP requests.</p>
+
+<p>This portion of the project is group work. During the course of this
+project you are allowed access to all online resources, but you are
+required to cite any resource that gave you any significant insight
+into the project, including conversations you had with those outside
+of your group. You will put these sources in <code class="highlighter-rouge">SOURCES.md</code> within this
+folder.</p>
+
+<p>This project consists of two broad parts: attacks and
+implementation. The attacks section will have you use ROP to get
+around the NX bit and defeat modern defenses. The implementation
+section will have you use defensive programming to implement the file
+server. You can choose to divvy up these tasks in whatever way makes
+sense for your group: you can all work on different parts, or work on
+each part together. But by the end of the project, every team member
+is responsible for understanding each part of the project (under
+penalty of not understanding well and then getting a bad grade on the
+exam). I recommend not getting <em>stuck</em> on one part, though, since they
+are logically independent.</p>
+
+<p>Please respect the department’s collaboration policy. Specifically,
+you are not allowed to look at any other group’s <em>code</em> (or do
+anything equivalent, such as talking through your code on a
+line-by-line basis). You may discuss pseudo-code on the board, but
+afterwards you must erase it (so as to not let anyone else see it) and
+then cite your conversation with the other person in a comment in your
+code (and in the sources file). <strong>Within</strong> your group you may
+collaborate in whatever way you want.</p>
+
+<p><strong>If you get stuck, look at the hints / advice at the bottom of this
+guide.</strong></p>
+
+<h1 id="project-overview">Project Overview</h1>
+
+<p>The goal of this project is to teach you the following:</p>
+<ul>
+  <li>Launching a ROP-based exploit that defeats ASLR, NX, and stack canaries</li>
+  <li>Defensive Programming</li>
+  <li>Writing an HTTP server in a native language</li>
+</ul>
+
+<p>You should first obtain the starter files for this project, perform a
+<code class="highlighter-rouge">git clone</code> of this project’s repository:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone github.com/security-course/file-server-group
+</code></pre></div></div>
+
+<p>The starter code is contained in a file <code class="highlighter-rouge">server.c</code>. But in the later
+part of the project, you’ll ditch that starter code and instead write
+your own server using whatever libraries you want.</p>
+
+<h3 id="collaboration-policy">Collaboration Policy</h3>
+
+<p>Specific examples that extend the collaboration policy for this lab:
+Same as on Project 1I, except replace ever occurrence of “other
+students” with “other groups.” This is to say, you may say whatever
+you want to your groupmembers, but shouldn’t talk about low-level
+details and addresses with other groups. I was quite satisfied with
+the level of collaboration that happened on the last project, so keep
+it up.</p>
+
+<h2 id="attacks">Attacks</h2>
+
+<p>In this part, we’ll be launching attacks against a security-hardened
+version of the server. Our server still contains vulnerabilities, but
+for this project ASLR will be turned <strong>on</strong>. I’ll also be turning on
+the NX bit, meaning you can’t inject code into the program and execute
+it.</p>
+
+<h3 id="part-0-exploiting-aslr">Part 0: Exploiting ASLR</h3>
+
+<p>In this part, you should look carefully at the implementation of
+<code class="highlighter-rouge">server.c</code> and think about how you could get the server to return to
+you the contents of the file <code class="highlighter-rouge">/proc/self/maps</code>. This will allow you to
+defeat ASLR since you’ll be able to learn the base address of certain
+values.</p>
+
+<p><strong>Deliverable</strong>: The function <code class="highlighter-rouge">dump_proc_self_maps</code> in
+<code class="highlighter-rouge">client.py</code>. This function–when run–prints the contents of the
+server’s <code class="highlighter-rouge">/proc/self/maps</code> to the screen of the <em>client</em>. (I.e., if I
+run it in python I should see the address on the server.)</p>
+
+<h3 id="part-1-mounting-a-ret-to-libc-attack">Part 1: Mounting a Ret-to-libc attack</h3>
+
+<p>In this part, you’re just going to cause the server to shut down. This
+is a <a href="https://en.wikipedia.org/wiki/Denial-of-service_attack">denial of service
+(DOS)</a>
+attack. You can’t inject code into the program to make it run <code class="highlighter-rouge">exit</code>,
+so instead you’ll have to reuse the function <code class="highlighter-rouge">exit</code>, which is already
+a part of <code class="highlighter-rouge">glibc</code>. Find it and run that.</p>
+
+<p><strong>Deliverable</strong>: The function <code class="highlighter-rouge">server_exit</code> in <code class="highlighter-rouge">client.py</code>. This
+function–when run–causes the server to call <code class="highlighter-rouge">exit</code> via a
+return-to-libc attack.</p>
+
+<p>Note that this will be run with ASLR turned <strong>on</strong>. This means that
+you’ll have to parse the contents of <code class="highlighter-rouge">/proc/self/maps</code> you get from
+the previous part.</p>
+
+<p><strong>Note</strong>: In this version of <code class="highlighter-rouge">server.c</code>, the <code class="highlighter-rouge">echo</code> command has
+changed slightly. Instead of the command being</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo hello
+</code></pre></div></div>
+
+<p>The new command is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo 5 hello
+</code></pre></div></div>
+
+<p>The format is <code class="highlighter-rouge">echo NNNNN data</code>, where <code class="highlighter-rouge">NNNNN</code> is a number of at most
+five characters in length, followed by a space, followed by the
+data. The number <code class="highlighter-rouge">NNNNN</code> specifies how much data to grab from <code class="highlighter-rouge">data</code>
+and put into <code class="highlighter-rouge">string</code>. This makes it so that you can input binary data
+into the buffer <code class="highlighter-rouge">string</code> containing zeros.</p>
+
+<p>Also note that the server prints out the socket being used, which will
+be helpful in subsequent parts.</p>
+
+<h3 id="part-2-finding-rop-gadgets">Part 2: Finding ROP gadgets</h3>
+
+<p>In this part of the assignment, you’re going to use
+return-oriented-programming to write the secret key out to the socket
+so that the attacker gets it on the other end of the
+wire. Essentially, you want to effect this sequence</p>
+
+<ul>
+  <li><code class="highlighter-rouge">%rax</code> contains 1</li>
+  <li><code class="highlighter-rouge">%rdi</code> contains the socket number (which you get from echo)</li>
+  <li><code class="highlighter-rouge">%rsi</code> contains the base of the secret key (which you get from
+<code class="highlighter-rouge">/proc/self/maps</code>)</li>
+  <li><code class="highlighter-rouge">%rdx</code> contains the length of the secret key (which doesn’t really
+matter, just set it at something like 100)</li>
+  <li>Finally, call <code class="highlighter-rouge">syscall</code></li>
+</ul>
+
+<p>To find gadgets, use the tool “Gadget Finder” in the EDB debugging
+toolkit. I have included a copy of EDB on the virtual machine for the
+class. For this part of the project, I recommend you either run the VM
+with its GUI, or use X forwarding to forward EDB to XQuartz.</p>
+
+<p>The gadget finder is available in EDB under the graphical menu
+“Plugins -&gt; ROPTool.” It has a number of configurations that allow you
+to select which parts of the code you want to search and which
+operations you want to find.</p>
+
+<p>Remember that it might be the case that there is no such gadget that
+simply moves 1 into <code class="highlighter-rouge">%rax</code>. Instead, you might have to use a
+combination of things (e.g., one that pops the top of the stack into
+%rbx and then exchanges <code class="highlighter-rouge">%bx</code> and <code class="highlighter-rouge">%ax</code>).</p>
+
+<p><strong>Deliverable</strong>: the file <code class="highlighter-rouge">rop_gadgets.txt</code> that lists the various
+gadgets you will use for your attack and lists how you will weave them
+together.</p>
+
+<h3 id="part-3-executing-the-gadgets">Part 3: Executing the gadgets</h3>
+
+<p>Now actually execute the attack. This attack must work even with ASLR
+turned on, meaning that you’ll have to construct the payload on the
+fly after reading <code class="highlighter-rouge">/proc/self/maps</code>.</p>
+
+<p><strong>Deliverable</strong>: the function <code class="highlighter-rouge">rop</code> in <code class="highlighter-rouge">client.py</code> that performs a
+ROP-based attack on the server to force it to dump the secret key.</p>
+
+<h3 id="part-4-rop-with-stack-protection">Part 4: ROP with Stack Protection</h3>
+
+<p>The version of the server I gave you for this assignment still has
+stack canaries turned off. This makes it possible to exploit the
+stack-based buffer overflows in the server. However, assuming the
+stack protector were turned on, it would be harder to launch this kind
+of an attack. Change the server so that it is susceptible to a
+ROP-based attack but also with the stack protector turned on. Clearly
+(since the stack protector is on) you won’t be able to use a
+stack-based buffer overflow (at least one of the form
+<code class="highlighter-rouge">strcpy(buffer)</code>).</p>
+
+<p><strong>Deliverable</strong>: a file <code class="highlighter-rouge">server_exploitable_canaries.c</code> that is
+exploitable with canaries turned on, and a description of how it would
+be exploited (either as an attack via a Python function like the
+previous parts, or a text-based description). Do your vulnerability
+writeup in a file <code class="highlighter-rouge">how_to_exploit_canaries.txt</code> and possibly link to
+any functions that launch the exploit.</p>
+
+<h2 id="defenses--implementation">Defenses / Implementation</h2>
+
+<p>The second part of your project will be to implement an HTTP-based web
+app that acts as a file server and accepts HTTP verbs. Your file
+server will serve and store files on disc. In the next assignment, you
+will use this file server to store files (or you can throw it
+away and reimplement it in Python, using this project as a learning
+experience). During this part, you’ll also document different
+security-related problems you thought about in code and how you
+designed to confront them.</p>
+
+<p>Along with your group, I recommend you read <a href="https://www.jmarshall.com/easy/http/">HTTP Made Really
+  Easy</a>. It doesn’t cover
+  everything, but it covers enough to give you the gist.</p>
+
+<p>For this project, you’ll be writing in any native language. I’ve
+provided starter code in C. But you can choose to reimplement it in
+C++ if you’d like (though the easiest thing to do would be to write in
+C). If you’d rather, you can also write in Rust, Go, etc… as long as
+it works with the tests scripts (which will call <code class="highlighter-rouge">make</code>). I expect
+most teams will write in C (I did while completing this project), and
+if you choose to use another language I am not obligated to support
+your learning it. If you want to be adventurous and choose another
+(native) language, don’t let me stop you. Just make sure it works with
+all of the tests.</p>
+
+<p><strong>Careful</strong>: don’t just start extending <code class="highlighter-rouge">server.c</code> like you might be
+tempted to. There is some advice at the end of this document that
+details picking an HTTP library.</p>
+
+<h3 id="server-setup">Server setup</h3>
+
+<p>Your server must run as a binary file named <code class="highlighter-rouge">fs</code>. It must accept
+<strong>two</strong> command-line arguments: the first is the port on which it will
+server data. The second is the root directory from which it will serve
+files. An example run of the server–and the one I will use in my
+tests–looks like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./fs 8080 ./files secret_key
+</code></pre></div></div>
+
+<p>This will tell the server to start serving files from the <code class="highlighter-rouge">files</code>
+directory on port 8080. Subsequently, I will refer to this
+command-line argument as the “root directory.”</p>
+
+<h3 id="requirements">Requirements</h3>
+
+<p>The goal of this project is to write a web server which serves files
+on a given port. Your server must accept four “verbs” in the HTTP
+protocol and behave as described in the following subparts. Note that
+in each of these subparts, the headline is only the verb, not the
+headers or body that follows it. If you’re stuck here, read about how
+HTTP works: it will be useful for you to know about anyway.</p>
+
+<h4 id="get-pathtofile-http11"><code class="highlighter-rouge">GET /path/to/file HTTP/1.1</code></h4>
+
+<p>The server must respond to HTTP <code class="highlighter-rouge">GET</code> requests and return files in a
+number of MIME types. To see an example of this, start the server like
+this:</p>
+
+<p><code class="highlighter-rouge">./fs 8080 ./files secret-key</code></p>
+
+<p>Now open a web browser and point it at <code class="highlighter-rouge">localhost:8080</code>. You should
+see a web page and a gif of a cat. Your job is to make sure that you
+implement this HTTP request correctly (i.e., fixing all of the bugs
+present in my implementation). You must also support more file types
+than I am currently supporting: the MIME types need to be lined up
+appropriately.</p>
+
+<p>An example GET request looks like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /sample.pdf HTTP/1.1
+Host: localhost:8080
+Connection: keep-alive
+Accept-Encoding: gzip, deflate
+Accept: */*
+User-Agent: python-requests/2.18.4
+</code></pre></div></div>
+
+<p>The constraints for <code class="highlighter-rouge">GET</code> are as follows:</p>
+
+<ul>
+  <li>
+    <p>[5 points] When the client (either a <code class="highlighter-rouge">telnet</code> user, a web browser, a
+Python script, etc..) issues a <code class="highlighter-rouge">GET /path/to/file</code> command to your
+server, your server should respond by looking up the file
+<code class="highlighter-rouge">&lt;root-directory&gt;/path/to/file</code>.</p>
+  </li>
+  <li>
+    <p>[2 points] If the file exists, it must <em>serve</em> that file in a
+response and respond with a <code class="highlighter-rouge">200 OK</code>.</p>
+  </li>
+  <li>
+    <p>[2 points] If the file does <em>not</em> exist, it must respond with a <code class="highlighter-rouge">404
+Not Found</code> and list the file which was not found.</p>
+  </li>
+  <li>
+    <p>[2 points] If the file exists, but is <em>not</em> world readable, your
+server <strong>must</strong> return a <code class="highlighter-rouge">403 Forbidden</code>.</p>
+  </li>
+  <li>
+    <p>[2 points] If–in looking up the file–you encounter a file which is
+not world-executable, you must return a <code class="highlighter-rouge">403 Forbidden</code>. For
+example, say that there is a file <code class="highlighter-rouge">files/myfolder/foo.txt</code>, and that
+<code class="highlighter-rouge">myfolder</code>’s permissions are <code class="highlighter-rouge">770</code> (i.e., readable, writable, and
+executable by user and group, but not readable, writable, or
+executable by anyone else) then you must return <code class="highlighter-rouge">403</code>, even if
+<code class="highlighter-rouge">foo.txt</code> is world readable.</p>
+  </li>
+  <li>
+    <p>[5 points] Your server <strong>must never</strong> allow any request for any file
+that is in any subdirectory of the root directory. For example, it
+had better not leak <code class="highlighter-rouge">../../../../proc/self/maps</code> (or something like
+that).</p>
+  </li>
+  <li>
+    <p>[5 points] In the case that the user attempts to <code class="highlighter-rouge">GET</code> a folder, the
+server must do something a bit special. It must return an HTML page
+that returns a list of links to files within the folder. For
+example, if the folder <code class="highlighter-rouge">/path</code> contains the files <code class="highlighter-rouge">foo</code> and <code class="highlighter-rouge">bar</code>,
+it should return a page something like this</p>
+  </li>
+</ul>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;&lt;title&gt;</span>/path<span class="nt">&lt;/title&gt;&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;&lt;h1&gt;</span>/path<span class="nt">&lt;/h1&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+    <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"localhost:8080/path/foo"</span><span class="nt">&gt;</span>foo<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+    <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"localhost:8080/path/bar"</span><span class="nt">&gt;</span>bar<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<h4 id="post-pathtofile-http11"><code class="highlighter-rouge">POST /path/to/file HTTP/1.1</code></h4>
+
+<p>To allow the user to upload files, your server will respond to a POST
+request. A POST request is an instruction that tells the server that
+the client wants to create something on the server. In this case, that
+will be a file.</p>
+
+<p>Here’s an example of what a POST to our server looks like:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /examplepdf.pdf HTTP/1.1;
+Host: localhost:8080
+Connection: keep-alive
+Accept-Encoding: gzip, deflate
+Accept: */*
+User-Agent: python-requests/2.18.4
+Content-Length: 54982
+Content-Type: multipart/form-data; boundary=d6e135d1e0f243bf8a931baf7e3ae35e
+
+--d6e135d1e0f243bf8a931baf7e3ae35e
+Content-Disposition: form-data; name="file"; filename="sample.pdf"
+
+PDF-1.2
+6 0 obj
+&lt;&lt; /S /GoTo /D (chapter.1) &gt;&gt;
+endobj
+8 0 obj
+(Template)
+endobj
+10 0 obj
+&lt;&lt; /S /GoTo /D (section.1.1) &gt;&gt;
+endobj
+12 0 obj
+(How to compile a texttt {.tex} file to a texttt {.pdf} file)
+endobj
+14 0 obj
+...
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p>[10 points] <code class="highlighter-rouge">POST /path/to/file</code> should accept multipart-encoded
+data.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">POST</code> is a fairly flexible HTTP verb, allowing a very general
+interaction with the server. You don’t need to know everything about
+it to accomplish the tasks in this project, but reading about it
+might help make it more concrete.</p>
+  </li>
+  <li>
+    <p>[2 points] Similarly to GET, POST must return a <code class="highlighter-rouge">403</code> if the request
+traverses into a folder that is not world-executable or tries to
+write a file that is not world writable.</p>
+  </li>
+  <li>
+    <p>[2 points] POST should return <code class="highlighter-rouge">400</code> (invalid request) if the
+filename that the user tries to write is invalid.</p>
+  </li>
+  <li>
+    <p>[5 points] In the case that the <code class="highlighter-rouge">POST</code> tries to put the file in a
+folder that does not yet exist, the folder should be created. So,
+for example, if the client <code class="highlighter-rouge">POST</code>s data to <code class="highlighter-rouge">/path/to/file</code> and only
+the folder <code class="highlighter-rouge">path</code> exists, the folder <code class="highlighter-rouge">to</code> should be created (as long
+as <code class="highlighter-rouge">path</code> is executable and writable).</p>
+  </li>
+</ul>
+
+<h4 id="put-pathtofile-http11"><code class="highlighter-rouge">PUT /path/to/file HTTP/1.1</code></h4>
+
+<p>[2 points] This should do the same thing as POST, except that in the
+case the file does not yet exist it should return a <code class="highlighter-rouge">400</code>.</p>
+
+<h4 id="delete-pathtofile"><code class="highlighter-rouge">DELETE /path/to/file</code></h4>
+
+<p>[5 points] As long as the permissions are correct (i.e., the file does
+not lie on a path wherein you traverse into a folder that isn’t
+world-executable, and the ultimate file and folder are world
+writable), the file will be deleted. Return <code class="highlighter-rouge">404</code> in the case the file
+does not exist, or <code class="highlighter-rouge">403</code> in the case of a permissions violation.</p>
+
+<h4 id="summary-of-commands">Summary of commands</h4>
+
+<ul>
+  <li>
+    <p><code class="highlighter-rouge">GET /path/to/file</code> Fetches a file, ensuring permissions are
+correct. Also note that for directories, GET will return an HTML
+page that gives links to the files contained within the directory.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">POST /path/to/file</code> Uploads a file, ensuring that permissions are
+correct and creating necessary subdirectories. Multipart-encoded
+form data must be supported. See the test in <code class="highlighter-rouge">test_post_file.py</code>.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">PUT /path/to/file</code> Updates an already-existing file.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">DELETE /path/to/file</code> Deletes an existing file</p>
+  </li>
+</ul>
+
+<h3 id="preventing-external-traffic">Preventing External Traffic</h3>
+
+<p>This part is worth 5 points.</p>
+
+<p>Your server is very vulnerable. You’ve now made something that allows
+anyone that can talk to your computer to be able to store and read
+files on it. This is certainly a bad idea. So you should turn it off.</p>
+
+<p>Read this guide and figure out how to block incoming and outgoing
+traffic to port <code class="highlighter-rouge">8080</code> (or whatever port you decide to use). (Note
+that you might need to read other guides too, generally: google around
+for how to do this.)</p>
+
+<p>https://www.thegeekdiary.com/centos-rhel-how-to-block-incoming-and-outgoing-ports-using-iptables/</p>
+
+<p>When you figure it out, write a shell script <code class="highlighter-rouge">block_ports.sh</code> that does
+this.</p>
+
+<p>The reason this is important is that when we move on to the next part
+of the assignment you’ll write a chat server. Your chat server will
+eventually hook up to this server to store the files.</p>
+
+<h3 id="denial-of-service-dos-prevention">Denial-Of-Service (DOS) Prevention</h3>
+
+<p>This part is worth 6 points.</p>
+
+<p>Right now, if I open up a <code class="highlighter-rouge">telnet</code> connection to the server, the
+server will be “tied up” in the sense that I can’t open up another
+connection to the server in another terminal. This is bad: it means
+that an attacker could take the server offline simply by taking too
+long to complete their request.</p>
+
+<p>You must figure out how to solve this problem. To do so, you should
+use either processes or threads to handle each incoming connection
+into the server. This will make your server a bit better. Of course,
+industrial-strength server setups also include a number of other
+network-based protection mechanisms (such as blocking whole swaths of
+IP ranges when they flood the server with too many requests).</p>
+
+<h2 id="server-tests-and-example-implementation-in-python">Server tests and Example Implementation in Python</h2>
+
+<p>There are a few tests you can execute against your server. Be careful
+to modify the tests so that they point at the proper port.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">test_get.py</code></li>
+  <li><code class="highlighter-rouge">test_get_harder.py</code></li>
+  <li><code class="highlighter-rouge">test_post_file.py</code></li>
+  <li><code class="highlighter-rouge">test_put_file.py</code></li>
+</ul>
+
+<p>Note that I am <strong>not</strong> giving you every single test I will use. This
+is by design. I have given you a specification I will use, and will
+test your submission using various combinations of this and the tool
+<a href="https://www.getpostman.com/">Postman</a>.</p>
+
+<p>You are required to write your own tests for this project, possibly in
+Python, shell scripts, etc.. While I will not explicitly grade these,
+I reserve the right to lower your grade if you don’t have at least a
+few tests for big features.</p>
+
+<p>To give you an idea of how the assignment should work, I have written
+an example implementation in Python. It is in the file <code class="highlighter-rouge">server.py</code>. I
+recommend you look it over and try to see what it’s doing. Your
+implementation should have a similar flavor. But it will probably be
+quite a bit more work, since you’ll need to figure out which libraries
+to use, and C is just going to be more verbose than Python no matter
+what.</p>
+
+<p>Note that you’ll have to install a few python packages to use that
+server. You’ll have to do a <code class="highlighter-rouge">sudo pip install</code> to get them. I have a
+file <code class="highlighter-rouge">setup_tests.sh</code> that will do this.</p>
+
+<h2 id="notes-on-ethics-and-realness">Notes on Ethics and “realness”</h2>
+
+<p>You would not want to use this server in practice, because it’s just
+an HTTP server. In particular, anyone looking at your connection will
+be able to snoop all of the data you transfer (including the
+files). One way to fix this is to use HTTPS, which runs HTTP over
+<a href="https://en.wikipedia.org/wiki/Transport_Layer_Security">SSL</a>. This
+allows all of the communication with the server to be encrypted. Your
+server does <em>not</em> implement SSL/TLS. So if you want to use it to store
+files for the next part of the assignment, the smart thing to do is to
+wall off the port and use it only for local traffic.</p>
+
+<h2 id="compiling-your-code">Compiling Your Code</h2>
+
+<p>You might ask how you compile your code. This is your job to figure
+out. I would most prefer it if you use a <code class="highlighter-rouge">Makefile</code>. If you’re using
+libraries, you better include them. Basically, I need to be able to
+figure out how to build your code easily, and it is your job to figure
+out how to do it. If in doubt, ask the people in the class that have
+more experience with low-level programming. It is totally fine to
+collaborate on things like Makefiles at any extent, as long as you
+don’t collaborate on the main source files (outside of your group:
+within your group do whatever you want).</p>
+
+<h2 id="deliverables">Deliverables</h2>
+
+<p><em>Note</em>: Deliverables will be accepted in no other format than those
+listed here. Specifically: if you write code that technically works,
+but does not fit the format the testing scripts expect, you will not
+receive points. Also note that <em>no partial credit</em> will be assigned
+throughout the course as a matter of policy, unless otherwise noted
+explicitly.</p>
+
+<p>Attacks:</p>
+
+<p>Part 0: Exploiting ASLR</p>
+<ul>
+  <li>[ ]/5 The function <code class="highlighter-rouge">dump_proc_self_maps</code> in <code class="highlighter-rouge">client.py</code></li>
+</ul>
+
+<p>Part 1: Mounting a Ret-to-libc attack</p>
+<ul>
+  <li>[ ]/10 The function <code class="highlighter-rouge">exit</code> in <code class="highlighter-rouge">client.py</code></li>
+</ul>
+
+<p>Part 2: Finding ROP gadgets</p>
+<ul>
+  <li>[ ]/10 The file <code class="highlighter-rouge">rop_gadgets.txt</code></li>
+</ul>
+
+<p>Part 3: Launching the attack</p>
+<ul>
+  <li>[ ]/10 The function <code class="highlighter-rouge">rop</code></li>
+</ul>
+
+<p>Part 4: ROP with Stack Protection</p>
+<ul>
+  <li>[ ]/5 The file <code class="highlighter-rouge">server_exploitable_canaries.c</code> and friends</li>
+</ul>
+
+<p>Defenses:</p>
+
+<p>Part 0: <code class="highlighter-rouge">GET</code>`</p>
+
+<ul>
+  <li>
+    <p>[ ]/5 Basic file lookup</p>
+  </li>
+  <li>
+    <p>[ ]/2 If the file exists, it must <em>serve</em> that file in a response
+and respond with a <code class="highlighter-rouge">200 OK</code>.</p>
+  </li>
+  <li>
+    <p>[ ]/2 If the file does <em>not</em> exist, it must respond with a <code class="highlighter-rouge">404
+Not Found</code> and list the file which was not found.</p>
+  </li>
+  <li>
+    <p>[ ]/2 If the file exists, but is <em>not</em> world readable, your
+server <strong>must</strong> return a <code class="highlighter-rouge">403 Forbidden</code>.</p>
+  </li>
+  <li>
+    <p>[ ]/2 If–in looking up the file–you encounter a file which is
+not world-executable, you must return a <code class="highlighter-rouge">403 Forbidden</code>. For
+example, say that there is a file <code class="highlighter-rouge">files/myfolder/foo.txt</code>, and that
+<code class="highlighter-rouge">myfolder</code>’s permissions are <code class="highlighter-rouge">770</code> (i.e., readable, writable, and
+executable by user and group, but not readable, writable, or
+executable by anyone else) then you must return <code class="highlighter-rouge">403</code>, even if
+<code class="highlighter-rouge">foo.txt</code> is world readable.</p>
+  </li>
+  <li>
+    <p>[ ]/5 Your server <strong>must never</strong> allow any request for any file
+that is in any subdirectory of the root directory. For example, it
+had better not leak <code class="highlighter-rouge">../../../../proc/self/maps</code> (or something like
+that).</p>
+  </li>
+  <li>
+    <p>[ ]/5 In the case that the user attempts to <code class="highlighter-rouge">GET</code> a folder, the
+server must do something a bit special. It must return an HTML page
+that returns a list of links to files within the folder. For
+example, if the folder <code class="highlighter-rouge">/path</code> contains the files <code class="highlighter-rouge">foo</code> and <code class="highlighter-rouge">bar</code>,
+it should return a page something like this</p>
+  </li>
+</ul>
+
+<p>Part 1: <code class="highlighter-rouge">POST</code></p>
+
+<ul>
+  <li>
+    <p>[ ]/10 <code class="highlighter-rouge">POST /path/to/file</code> should accept multipart-encoded
+data.</p>
+  </li>
+  <li>
+    <p>[ ]/2 POST must return a <code class="highlighter-rouge">403</code> if the request traverses into a folder
+that is not world-executable or tries to write a file that is not
+world writable.</p>
+  </li>
+  <li>
+    <p>[ ]/2 POST should return <code class="highlighter-rouge">400</code> (invalid request) if the filename
+that the user tries to write is invalid.</p>
+  </li>
+  <li>
+    <p>[ ]/5 In the case that the <code class="highlighter-rouge">POST</code> tries to put the file in a folder
+that does not yet exist, the folder should be created. So, for
+example, if the client <code class="highlighter-rouge">POST</code>s data to <code class="highlighter-rouge">/path/to/file</code> and only the
+folder <code class="highlighter-rouge">path</code> exists, the folder <code class="highlighter-rouge">to</code> should be created (as long as
+<code class="highlighter-rouge">path</code> is executable and writable).</p>
+  </li>
+</ul>
+
+<p>Part 2: <code class="highlighter-rouge">PUT</code></p>
+
+<ul>
+  <li>[ ]/2 This should do the same thing as POST, except that in the case
+the file does not yet exist it should return a <code class="highlighter-rouge">400</code>.</li>
+</ul>
+
+<p>Part 3: <code class="highlighter-rouge">DELETE</code></p>
+
+<ul>
+  <li>[ ]/5 Implementation of DELETE as described above.</li>
+</ul>
+
+<p>Part 4: [ ]/5 Preventing External Traffic</p>
+
+<p>Part 5: [ ]/6 DOS Protection</p>
+
+<p>Total: [ ]/100</p>
+
+<h2 id="personal-advice-on-accomplishing-this-project">Personal Advice on Accomplishing this Project</h2>
+
+<p>With the proper selection of tools, this assignment should not be an
+overwhelming amount of work. In particular, avoid parsing HTTP
+manually: that’s error prone and it’s going to get complicated
+fast. You likely have not had extensive exposure to HTTP before this
+project, and possibly not extensive socket programming experience
+either. Because of that, make sure you start early. Budget time to
+learn about HTTP. Most of the time, the best way to figure things out
+is to start hacking on something.</p>
+
+<p>Right now, the server is written to manually parse the HTTP
+request. In general, you shouldn’t do that: you’re going to expend a
+ton of time and effort and probably get it wrong. Instead, I recommend
+that you use a library that parses HTTP requests for you. Here are a
+few I think might help you:</p>
+
+<ul>
+  <li>https://github.com/nodejs/http-parser</li>
+  <li>https://github.com/h2o/picohttpparser</li>
+  <li>https://github.com/iafonov/multipart-parser-c</li>
+  <li>https://github.com/Samsung/http-parser</li>
+  <li>https://github.com/francoiscolas/multipart-parser</li>
+  <li>https://github.com/soywod/c-request</li>
+  <li>https://github.com/nekipelov/httpparser</li>
+  <li>https://github.com/AndreLouisCaron/httpxx</li>
+  <li>https://github.com/c9s/h3</li>
+</ul>
+
+<p>Most of these parsers are callback-based: you set them up and they
+call back a function whenever you’ve read all of the data. So–for
+example–you can set them up to call one of your functions when
+they’ve read all of the <code class="highlighter-rouge">POST</code> request, and then you get a pointer to
+it (and its length), which you can use to write it to a file.</p>
+
+<p>Remember that the point of this project is to practice writing secure
+code. Using other people’s libraries can be helpful: if they’ve
+written code well, then it saves you time. But if you pull some random
+student’s HTTP parser off github and use it in your project, you
+should be mindful it might have bugs: these will come back to bite you
+(i.e., <em>lower your grade</em>) later in the “break it” phase of the final
+project when other students find bugs in the code you
+included. Therefore, make sure to read over the code you include.</p>
+
+<h2 id="resources-and-advice">Resources and Advice</h2>
+
+<ul>
+  <li>I recommend you read <a href="https://www.jmarshall.com/easy/http/">HTTP Made Really
+Easy</a></li>
+  <li>You’ll also need to read about HTTP multipart POSTs:</li>
+  <li>https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#4xx_Client_errors</li>
+</ul>
+
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    
+
+    <!-- <h2 class="footer-heading">CS107</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>CS107</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>CS107</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+<script src=http://localhost:4000/bower_components/jquery/dist/jquery.min.js></script>
+<script src=http://localhost:4000/bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js></script>
+
+
+  </body>
+
+</html>

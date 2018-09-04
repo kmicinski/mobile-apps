@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Project 2I: SquirrelChat</title>
+  <meta name="description" content="In this project, you’ll be writing a chat server. You’ll interfacewith this chat server in a variety of ways: you can either telnet toit manually and send co...">
+
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/project/3">
+  <link rel="alternate" type="application/rss+xml" title="CS107" href="http://localhost:4000/feed.xml">
+</head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href=http://localhost:4000/>CS107</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/assignments/">Assignments</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/blog/">Posts</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/resources">Resources</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/schedule/">Schedule</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/syllabus/">Syllabus</a>
+          
+        
+      </div>
+    </nav>
+
+  </div>
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Project 2I: SquirrelChat</h1>
+    <h3><b>Project due date: <time datetime="2018-03-23T00:00:00-04:00">Mar 23,
+    2018 (5:59PM Eastern)</time></b></h3>
+  </header>
+
+  <div class="post-content writeup-content" itemprop="articleBody">
+    <p>In this project, you’ll be writing a chat server. You’ll interface
+with this chat server in a variety of ways: you can either telnet to
+it manually and send commands, interface using a client (which I’ll
+hand out in the next week or two), or (in project 3) using a web
+frontend. The protocol is reminiscent of
+<a href="https://en.wikipedia.org/wiki/Internet_Relay_Chat">IRC</a> or
+<a href="https://en.wikipedia.org/wiki/Slack_(software)">Slack</a>.</p>
+
+<p>The SquirrelChat protocol is described precisely at the end of this
+document. Your server must correctly implement all of the commands
+according to the protocol. To test your server, you’ll either use
+<code class="highlighter-rouge">telnet</code> or hand-rolled testing scripts. I’ll give you one or two of
+these scripts upon project release, but I’ll also require that you
+write some of your own. I’ll maintain a public Github repo to which
+you will contribute tests via pull request.</p>
+
+<p>I have implemented some basic stub code that does parsing for various
+messages. You can write your SquirrelChat server in whatever language
+you want, but my starter code is given in Python. I would welcome
+implementations in OCaml, Haskell, etc.. But I assume no obligation to
+teach you these languages as part of this project. If you use a
+particularly cool language or a particularly elegant technique (e.g.,
+if you go out on a limb and try to use Haskell to write the server), I
+<em>may</em> award you 1-4 points of extra credit.</p>
+
+<p>SquirrelChat is a fairly simple chat protocol. There are users, and
+there are channels (“chat rooms”). Users can join (or create)
+channels. Channels have a set of “administrators” that can change
+their topic (a short message that is associated with the
+channel). When a user sends a message to a channel, all members of the
+channel receive it. Users can also send private messages to each
+other. SquirrelChat also allows users to block each other, and has a
+few security features (e.g., only admins can change topics and ban
+users). Additionally, users may upload files to channels or to another
+user.</p>
+
+<p>In this assignment, you’ll implement the core of SquirrelChat as a
+server that my client can connect to. There are also a set of tests,
+some of which I’ve given you (others which I haven’t). SquirrelChat is
+inherently insecure: it’s executing over raw sockets, meaning that
+people in the middle will be able to sniff all of the information sent
+across SquirrelChat (e.g., someone sniffing packets in the same coffee
+shop as you). In the next assignment we’ll add multiple security
+features to SquirrelChat: encryption, encrypted file storage, properly
+saving passwords, and having properly encrypted channels so that only
+the members of secure channels can see each others’ messages.</p>
+
+<p>This assignment is open-ended by design. Throughout the course of the
+project, I will periodically release some tests for you, but I am not
+under <em>obligation</em> to give you all of the tests I will use. If you
+have any questions on the spec, please let me know and I’ll update
+immediately.</p>
+
+<h1 id="command-overview">Command Overview</h1>
+
+<p>SquirrelChat packets are specified as follows. See <code class="highlighter-rouge">parser.py</code> and
+<code class="highlighter-rouge">messages.py</code> for details. This is the master specification.</p>
+
+<p><strong>IMPORTANT Note</strong>: the maximum length of <em>any</em> packet in this part of
+the project is <code class="highlighter-rouge">1024</code>. You are <em>not</em> obligated to handle the case
+where packets longer than that are sent.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">register &lt;username&gt; &lt;password&gt;</code> [5 points]
+    <ul>
+      <li>Both <code class="highlighter-rouge">username</code> and <code class="highlighter-rouge">password</code> are contiguous strings (i.e., no spaces)</li>
+      <li><code class="highlighter-rouge">username</code> may not start with the character <code class="highlighter-rouge">#</code> (used for channels).</li>
+      <li>Upon successfully sending <code class="highlighter-rouge">register</code>, the server automatically
+logs the user in as <code class="highlighter-rouge">&lt;username&gt;</code> with the associated password</li>
+      <li>Must save a new record in the password database for username and password (the password database is described below)</li>
+      <li>If the <code class="highlighter-rouge">username</code> or <code class="highlighter-rouge">password</code> is invalid, or if the register command is given more arguments, then the server should return an <code class="highlighter-rouge">error</code> message with some descriptive error of your choice.</li>
+      <li>Example: <code class="highlighter-rouge">register kmicinski helloworld234**</code></li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">authenticate &lt;username&gt; &lt;password&gt;</code> [5 points]
+    <ul>
+      <li>Checks the password file for the entry of <code class="highlighter-rouge">username</code> and <code class="highlighter-rouge">password</code> and–if the username matches the password–logs in the user.</li>
+      <li>If the <code class="highlighter-rouge">username</code> or <code class="highlighter-rouge">password</code> does not match the one stored in the password database, returns an <code class="highlighter-rouge">error</code> of the appropriate type.</li>
+      <li>Example: <code class="highlighter-rouge">register kmicinski helloworld234**</code></li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">update_pw &lt;password&gt;</code> [5 points]
+    <ul>
+      <li>User must be logged in</li>
+      <li>Updates a logged-in user’s password as <code class="highlighter-rouge">&lt;password&gt;</code></li>
+      <li>Also updates the password file</li>
+      <li>Example: <code class="highlighter-rouge">update_pw helloworld234**</code></li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">join &lt;channel_name&gt;</code> [5 points]
+    <ul>
+      <li>User must be logged in.</li>
+      <li>Validate that <code class="highlighter-rouge">&lt;channel_name&gt;</code> starts with <code class="highlighter-rouge">#</code>. All channels have
+<code class="highlighter-rouge">#</code> at the start of their name.</li>
+      <li>If the channel <em>exists</em>:
+        <ul>
+          <li>Check to make sure the user is not banned from the channel.
+            <ul>
+              <li>If they are, return an error message to the user indicating this.</li>
+            </ul>
+          </li>
+          <li>If they are not banned, add the user to the channel, they will now 
+receive subsequent messages to that channel.</li>
+        </ul>
+      </li>
+      <li>If the channel does <em>not</em> exist:
+        <ul>
+          <li>Create the channel</li>
+          <li>Make the sending user the administrator of the channel</li>
+          <li>Add the user as the only member of the channel</li>
+          <li>Set the topic to some initial message</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>Example: <code class="highlighter-rouge">join #hello</code></p>
+  </li>
+  <li><code class="highlighter-rouge">chat &lt;user_or_channel&gt; &lt;message&gt;</code> [5 points]
+    <ul>
+      <li><code class="highlighter-rouge">&lt;user_or_channel&gt;</code> is a contiguous string, but <code class="highlighter-rouge">&lt;message&gt;</code> is
+just the rest of the message.</li>
+      <li>This is a message that a <em>user</em> sends to the <em>server</em></li>
+      <li>If the user is logged in, check to make sure that the user or
+channel exists. If they aren’t, send an error back.</li>
+      <li>If <code class="highlighter-rouge">&lt;user_or_channel&gt;</code> starts with a <code class="highlighter-rouge">#</code>, it is a channel. Ensure
+that the user is logged in to the channel. If they are not, send
+back an <code class="highlighter-rouge">error</code> message of the appropriate type.</li>
+      <li>If it does not start with <code class="highlighter-rouge">#</code>, it is a user. Check to ensure the
+user exists. IF the user does not exist, send back an <code class="highlighter-rouge">error</code> of
+the appropriate type.</li>
+      <li>If <code class="highlighter-rouge">&lt;user_or_channel&gt;</code> is a user that has not blocked the
+currently logged in user. If they have, do nothing.</li>
+      <li>If they have not blocked the sender of the message, the server
+sends that user a <code class="highlighter-rouge">chatfrom</code> message.</li>
+      <li>Example: <code class="highlighter-rouge">chat #channel Hi there everyone!</code></li>
+      <li>Example: <code class="highlighter-rouge">chat eliana Hi there, Eliana!</code></li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">chatfrom &lt;from_user&gt; &lt;channel_or_user&gt; &lt;message&gt;</code> [5 points]
+    <ul>
+      <li>This is a command that the <em>server</em> sends to a <em>client</em>.</li>
+      <li>The way to interpret this is that <code class="highlighter-rouge">&lt;from_user&gt;</code> sent a message to
+channel <code class="highlighter-rouge">&lt;channel_or_user&gt;</code> if <code class="highlighter-rouge">&lt;channel_or_user&gt;</code> begins with
+<code class="highlighter-rouge">#</code>. Otherwise, this is a private message, and the username is in
+the <code class="highlighter-rouge">&lt;channel_or_user&gt;</code> field.</li>
+      <li><code class="highlighter-rouge">&lt;from_user&gt;</code> is a logged in user.</li>
+      <li>This command will never be received from users who have been
+blocked by the client. In other words, if Alice has blocked Bob,
+Alice will never receive messages from Bob: either on channels to
+which Bob belongs, or through private messages.</li>
+      <li>Example: <code class="highlighter-rouge">chatfrom bob #hello Hello there, everyone!</code></li>
+      <li>Example: <code class="highlighter-rouge">chatfrom bob alice Hello there, Alice!</code></li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">gettopic #channel</code> [5 points]
+    <ul>
+      <li>Gets the topic for a channel</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">topic #channel &lt;topic&gt;</code> [5 points]
+    <ul>
+      <li>The server returns this packet as the result of a <code class="highlighter-rouge">gettopic</code>
+command, assuming that the user is logged in to the given channel
+ (i.e., has successfully run a <code class="highlighter-rouge">join</code> command for that channel).</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">settopic #channel &lt;topic&gt;</code> [5 points]
+    <ul>
+      <li>Sets the topic for a channel, assuming the sender is the
+administrator of that channel.</li>
+      <li>Sends back error otherwise.</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">leave #channel</code> [5 points]
+    <ul>
+      <li>The sender will now stop receiving <code class="highlighter-rouge">chatfrom</code> messages sent to
+<code class="highlighter-rouge">#channel</code>. If they were the administrator, they are still the
+administrator. Nobody else becomes an administrator.</li>
+      <li>Sender must be able to join again later.</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">error &lt;msg&gt;</code>
+    <ul>
+      <li>The server sends this error to a client in the event that an error
+occurs.</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">ban &lt;channel&gt; &lt;user&gt;</code> [5 points]
+    <ul>
+      <li>If the sender of this message is the administrator of <code class="highlighter-rouge">&lt;channel&gt;</code>,
+then <code class="highlighter-rouge">&lt;user&gt;</code> is now banned from <code class="highlighter-rouge">&lt;channel&gt;</code> and can no longer
+receive messages. I.e., it is essentially as if <code class="highlighter-rouge">&lt;user&gt;</code> had run
+the <code class="highlighter-rouge">leave</code> command.</li>
+      <li>If the sender is <em>not</em> the administrator, send an <code class="highlighter-rouge">error</code> of the
+appropriate type.</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">unban &lt;channel&gt; &lt;user&gt;</code> [5 points]
+    <ul>
+      <li>If the sender of this message is the administrator of <code class="highlighter-rouge">&lt;channel&gt;</code>,
+then <code class="highlighter-rouge">&lt;user&gt;</code> is now unbanned from <code class="highlighter-rouge">&lt;channel&gt;</code> and can <code class="highlighter-rouge">join</code>
+again.</li>
+      <li>If the sender is <em>not</em> the administrator, send an <code class="highlighter-rouge">error</code> of the
+appropriate type.</li>
+    </ul>
+  </li>
+  <li><code class="highlighter-rouge">block &lt;user&gt;</code>
+    <ul>
+      <li>Block the specified username. Send the appropriate error if the
+user does not exist.</li>
+    </ul>
+  </li>
+</ul>
+
+<h1 id="starting-the-server">Starting the Server</h1>
+
+<p>The server is started via (in the <code class="highlighter-rouge">server</code> directory)</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./server passwords.csv
+</code></pre></div></div>
+
+<p>Where <code class="highlighter-rouge">passwords.csv</code> is a CSV file listing usernames and passwords
+for the server. CSV files are in <a href="https://en.wikipedia.org/wiki/Comma-separated_values">Comma-Separated
+Values</a>
+format. An example <code class="highlighter-rouge">passwords.csv</code> might look like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>username,password
+isabella,hacker12**@a3
+john,aacv23aad%$aD
+</code></pre></div></div>
+
+<p>The file will <em>always</em> start with the header (first line) of
+<code class="highlighter-rouge">username,password</code> and will be followed by a set of lines containing
+usernames and values, each separated by a comma.</p>
+
+<p>Any password database must be able to be used, not just
+<code class="highlighter-rouge">passwords.csv</code>. Various commands (<code class="highlighter-rouge">register</code> and <code class="highlighter-rouge">update_pw</code>) will
+<em>change</em> the database. You must <em>save</em> an updated database whenever
+these commands are sent to the server.</p>
+
+<h1 id="part-0-design-document-10-points">Part 0: Design Document (10 points)</h1>
+
+<p>This project is intended to give you practice programming “in the
+large.” You will need to use a variety of data structures to help you
+implement this server. Specifically, think about the following:</p>
+
+<ul>
+  <li>How you will implement channels?</li>
+  <li>How will users be represented? (E.g., as classes?)</li>
+  <li>How will you manage the state of the protocol? I.e., how will you
+make sure users don’t send messages until they are logged in?</li>
+  <li>How will you handle blocking and banning?</li>
+</ul>
+
+<p>Write this in an email / document / Google Doc / etc… And give it to
+me before you start writing up your code so I can read over it. I will
+point you in the right directions. If you are feeling anxious about
+how to tackle this, come to my office and we will sketch it out on the
+board.</p>
+
+<h1 id="part-1-server-protocol-implementation-60-points">Part 1: Server Protocol Implementation (60 points)</h1>
+
+<p>This part is the majority of the project. You are to flesh out the
+implementation of the server according to the command specification
+given above. I have provided starter code in the <code class="highlighter-rouge">server</code> directory of
+this project.</p>
+
+<p>You will get credit for each piece of the protocol you implement. Any
+questions about minor technicalities can be addressed to me via Piazza
+/ email and I will respond very quickly. I will also keep the course
+webpage updated.</p>
+
+<h1 id="part-2-writing-tests-10-points">Part 2: Writing Tests (10 points)</h1>
+
+<p>You must find <em>two separate pieces</em> of the project and figure out how
+to write tests for them. For example, you might choose to ensure that
+users can’t send messages to other users that have blocked them. Or
+you might want to ensure that usernames can’t start with <code class="highlighter-rouge">#</code>. Write
+these as two separate tests using either hand-rolled code or a unit
+testing framework in your language of choice. Write in this README
+where you put them.</p>
+
+<h1 id="part-3-password-managers-and-pgp-10-points">Part 3: Password Managers and PGP (10 points)</h1>
+
+<p>For this part of the project, you can do one of two things:</p>
+
+<ul>
+  <li>
+    <p>Install a password manager and start using it for all of your
+passwords.</p>
+  </li>
+  <li>
+    <p>Create a <a href="https://www.pitt.edu/~poole/accessiblePGP703.htm">PGP key</a>
+for yourself and begin cryptographically signing your communication
+with a few other people you communicate with. You can do this by,
+e.g., writing me an email and signing it.</p>
+  </li>
+</ul>
+
+<p>You must at least <em>read</em> about how PGP works and figure out what it
+means to cryptographically sign your emails. We’ll cover a bit of this
+in class, and you’ll start to do it on project 2G with your team.</p>
+
+<p>To receive credit for this part, create a document in this directory,
+<code class="highlighter-rouge">experiences.txt</code>, and write a brief discussion of your experiences
+with either of these tools. Describe the pains and advantages of using
+them, and how using one of the two has informed your thoughts on
+security.</p>
+
+<h1 id="if-you-get-stuck">If you get stuck…</h1>
+
+<p>Don’t spend more than an hour or two stuck on a problem. If you feel
+like you’re stuck and not being productive, email me sooner rather
+than later. These things can be tricky. You’re all very good, though,
+so I know you can do it..!</p>
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    
+
+    <!-- <h2 class="footer-heading">CS107</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>CS107</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>CS107</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+<script src=http://localhost:4000/bower_components/jquery/dist/jquery.min.js></script>
+<script src=http://localhost:4000/bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js></script>
+
+
+  </body>
+
+</html>

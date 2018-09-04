@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Project 1: Intro to Android, Containers, and Observers</title>
+  <meta name="description" content="In this project, you’ll be expanding the example app we worked onthroughout the first few days of the course.  You’ll be learning someof the basic ideas of A...">
+
+  <link rel="stylesheet" href="http://kmicinski.com/mobile-apps/css/main.css">
+  <link rel="canonical" href="http://kmicinski.com/mobile-apps/projects/1">
+  <link rel="alternate" type="application/rss+xml" title="CS395" href="http://kmicinski.com/mobile-apps/feed.xml">
+</head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href=http://kmicinski.com//mobile-apps/>CS395</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+          <a class="page-link" href="http://kmicinski.com//mobile-apps/assignments/">Assignments</a>
+          
+        
+          
+          <a class="page-link" href="http://kmicinski.com//mobile-apps/blog/">Posts</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+          <a class="page-link" href="http://kmicinski.com//mobile-apps/resources">Resources</a>
+          
+        
+          
+          <a class="page-link" href="http://kmicinski.com//mobile-apps/schedule/">Schedule</a>
+          
+        
+          
+          <a class="page-link" href="http://kmicinski.com//mobile-apps/syllabus/">Syllabus</a>
+          
+        
+      </div>
+    </nav>
+
+  </div>
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Project 1: Intro to Android, Containers, and Observers</h1>
+    <h3><b>Project due date: <time datetime="2018-09-10T00:00:00-04:00">Sep 10,
+    2018 (5:59PM Eastern)</time></b></h3>
+  </header>
+
+  <div class="post-content writeup-content" itemprop="articleBody">
+    <p>In this project, you’ll be expanding the example app we worked on
+throughout the first few days of the course.  You’ll be learning some
+of the basic ideas of Android programming along with implementing a
+few basic data structures and patterns in Java. There is an emphasis
+not on Android UI (which is largely trivia, and I expect you to learn
+on your own) but instead on good software engineering: code reuse,
+testing, and thoughtful use of object-oriented design.</p>
+
+<p>This assignment has 100 points, 20 of which are reserved for code
+style. I will grade code style fairly aggressively, so I strongly
+recommend taking it seriously. You don’t have to follow the style I
+would write down to a tee, but you need to make consistent choices
+about your code.</p>
+
+<p>You will have three weeks to work on this assignment. I expect that
+good solutions to this project will take a few hundred lines
+(including logic, tests, etc..), but probably less than 1000. There
+are a lot of tricky things to learn in this project, especially since
+it’s in an unfamiliar language and will use concepts that you probably
+don’t fully understand quite yet. I strongly recommend you take the
+three-week time on the assignment as an indication of the fact that it
+will be a decent amount of work, more than you can get done in the
+last few days.</p>
+
+<p>Good luck! I think this one will hopefully be a lot of fun.</p>
+
+<h3 id="part-0-getting-the-app-set-up-on-your-machine">Part 0: Getting the App Set Up on Your Machine</h3>
+
+<h3 id="part-1-fleshing-out-an-implementation-10-points">Part 1: Fleshing Out an Implementation (10 points)</h3>
+
+<p>For this part of the assignment, you will complete the implementation
+of several methods in <code class="highlighter-rouge">SquirrelList</code> that I’ve left for you to do. All
+of these functions are marked with <code class="highlighter-rouge">TODO</code> in that file, along with a
+descriptive comment. Specifically, you will be adding the following
+methods (and their associated tests):</p>
+
+<ul>
+  <li>A constructor that allows you to create a list from an array</li>
+  <li><code class="highlighter-rouge">isEmpty</code></li>
+  <li><code class="highlighter-rouge">contains</code></li>
+  <li><code class="highlighter-rouge">toArray</code></li>
+  <li><code class="highlighter-rouge">remove</code></li>
+  <li><code class="highlighter-rouge">addAll</code></li>
+  <li><code class="highlighter-rouge">clear</code></li>
+</ul>
+
+<p>You must also write associated tests for all of these methods. I’ve
+scattered a few throughout, some pass (but the ones that pass do so
+because the tests aren’t covering all of the behavior). For example,
+the test for <code class="highlighter-rouge">isEmpty</code> passes right now because that method always
+returns false.</p>
+
+<h3 id="part-2-debugging-a-faulty-implementation-15-points">Part 2: Debugging A Faulty Implementation (15 points)</h3>
+
+<p>For the first part of the assignment, you will be debugging some
+faulty code. The broken code is in the <code class="highlighter-rouge">remove()</code> function of the
+iterator for the implementation of <code class="highlighter-rouge">SquirrelList</code>.</p>
+
+<p>I have written a <em>passing</em> test for the <code class="highlighter-rouge">remove function in the test
+suite for </code>SquirrelList<code class="highlighter-rouge">. It is called </code>list_removeLink`. However,
+despite my passing test, the function is still broken. I didn’t test
+enough of the behavior to reveal the bug.</p>
+
+<p>In this part of the assignment, your job is to sit and think hard
+about the implementaito of <code class="highlighter-rouge">remove</code> to decide why it is broken. Then,
+I want you to write a test that <em>fails</em> but <em>should</em> pass. In other
+words, I want you to write a test that explains the correct behavior
+you would expect, but fails because the implementation is broken.</p>
+
+<ul>
+  <li>(5 points) Write a test exhibiting the broken implementation of
+<code class="highlighter-rouge">remove</code>.</li>
+</ul>
+
+<p>Next, I want you to go through the <code class="highlighter-rouge">remove</code> function during the
+execution of the test. To do this, set a breakpoint on the <code class="highlighter-rouge">remove</code>
+function and examine the state of the iterator and the list as the
+function is executing.</p>
+
+<ul>
+  <li>(5 points) Show me a screenshot of your debugger during the
+execution of the <code class="highlighter-rouge">remove</code> function.</li>
+</ul>
+
+<p>Last, I want you to fix the implementation of <code class="highlighter-rouge">remove</code> so that the
+test doesn’t break.</p>
+
+<ul>
+  <li>(5 points) Fix the implementation of <code class="highlighter-rouge">remove</code> so that the test no
+longer breaks.</li>
+</ul>
+
+<h3 id="part-3-implementing-a-doubly-linked-list-15-points">Part 3: Implementing a Doubly-Linked List (15 points)</h3>
+
+<p>In this part of the assignment, I want you to write an implementation
+of a <em>doubly</em> linked list. A singly-linked list allows us to move
+forward, e.g., by using calls to <code class="highlighter-rouge">next</code>, but doesn’t allow us to move
+backwards. If we want to get to the previous node in a list, we have
+to start over from the beginning. A doubly-linked list has links on
+both sides, so that you can move forwards and backwards.</p>
+
+<p>I’ve provided a skeleton implementation of a doubly linked list for
+you to extend yourself, which I’ve called
+<code class="highlighter-rouge">SquirrelDoublyLinkedList</code>. As with all of the things you write in
+this class, you also need a set of tests to go along with your
+implementation.</p>
+
+<p>For this part, you need to implement all of the methods in the
+<code class="highlighter-rouge">SquirrelDoublyLinkedList</code> class so that all of the tests pass. You
+must also implement the iterator
+<code class="highlighter-rouge">SquirrelDoublyLinkedListIterator</code>. Along with your iterator, you must
+think up several tests to show to me that it works.</p>
+
+<p>Right now, all of the tests in <code class="highlighter-rouge">SquirrelDoublyLinkedListTest</code>
+fail. For full points, you must make all of your tests
+pass. Additionally, you must write (at least one) test that shows that
+<code class="highlighter-rouge">.prev</code> is working correctly. I would do this by making a list that
+was three nodes long (A, B, and C), going to the third, and then going
+back two, finally checking to ensure that the thing you get at the end
+is A.</p>
+
+<p>You will find most of the relevant code for this part in the file
+<code class="highlighter-rouge">SquirrelDoublyLinkedList.java</code>. You should extend the classes in the
+proper places. Keep in mind that all of the tests for a singly-linked
+list should still pass for your doubly-linked
+list. But–additionally–you should add some more tests that allow you
+to iterate backwards.</p>
+
+<ul>
+  <li>
+    <p>(5 points) The implementation of <code class="highlighter-rouge">SquirrelDoublyLinkedList</code></p>
+  </li>
+  <li>
+    <p>(5 points) The implementation of <code class="highlighter-rouge">SquirrelDoublyLinkedListIterator</code></p>
+  </li>
+  <li>
+    <p>(5 points) A passing test suite that includes relevant tests for all
+interesting behavior in the doubly-linked list</p>
+  </li>
+</ul>
+
+<h4 id="regarding-code-reuse">Regarding Code Reuse</h4>
+
+<p>The implementation of <code class="highlighter-rouge">SquirrelList</code> was a decent amount of code. At
+first glance, it may appear that you have to do a ton of that work
+<em>again</em> for <code class="highlighter-rouge">SquirrelDoublyLinkedLiist</code>. But if you find yourself
+repeating much code, you’re probably doing something wrong.</p>
+
+<p>In fact, you really shouldn’t have to add <em>that</em> much code at all. The
+key to getting this part done easily is to realize that double-links
+are subclasses of single-links, so that any method that can work with
+single-links can also work on double links.</p>
+
+<h3 id="part-4-implementing-a-custom-adapter-with-an-observer-15-points">Part 4: Implementing a Custom Adapter With an Observer (15 points)</h3>
+
+<p>Right now, the implementation</p>
+
+<h3 id="part-5-a-task-to-parse-and-add-squirrels-10-points">Part 5: A Task to Parse and Add Squirrels (10 points)</h3>
+
+<p>In this part of the assignment, you’re going to leverage the observer
+that you wrote in the last part. The way we’ve written our adapter, it
+tells the Android system how to draw the dataset in question. So, for
+example, when you open up the app, it shows you the first ten or so
+squirrels. The issue is that–once the data is drawn on the
+screen–it’s done. What happens if the squirrel data changes? E.g.,
+what happens if a squirrel is added to the front of the list? In that
+case, the view is out of data with the data.</p>
+
+<p>This is the purpose of the observer we just built. To test it out, we
+need to have something about the squirrel data change. To do this,
+we’re going to use a “task.”</p>
+
+<p>The purpose of a task is to run computations that might take a long
+time. The phone is constantly redrawing the screen, processing user
+clicks, running your code, etc… The problem comes in when you have a
+piece of code that takes a long time to run. Say, for example, you
+were to download something from the internet. It may take a few
+seconds (or even minutes) to complete. During this whole time, if your
+code is running, you won’t be able to interact with the app at all: it
+will just feel like the screen is sitting there, totally stale and
+lifeless.</p>
+
+<p>So realistic applications run multiple threads of computation. One
+special “main” thread does all of the drawing on the screen, and also
+processes things like button clicks, etc.. But you can launch other
+threads. One way to do this is to use Java’s low level <code class="highlighter-rouge">Thread</code>
+interface. You may be familiar with this from other courses. In this
+assignment, we won’t be using threads explicitly. Instead, we’ll be
+using a “task”, an abstraction built around threads to allow you to
+write code that runs in the background without you having to make a
+thread explicitly. Tasks have some advantages that we’re not going to
+talk about quite yet.</p>
+
+<p>Your task will download JSON data from a particular URL and “parse” it
+into Squirrel objects that will be added to the list of squirrels. The
+JSON that I’ll give you looks like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[
+  {
+    "name": "African Ground Squirrel",
+    "location": "Africa"
+    "picture": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Borstenhoernchen-02.jpg/300px-Borstenhoernchen-02.jpg"
+  },
+  ...
+]
+</code></pre></div></div>
+
+<p>In other words, it’s an array (list) of JSON objects, each with a
+field for name, location, and picture.</p>
+
+<h3 id="part-6-downloading-squirrel-images-asynchronously-10-points">Part 6: Downloading Squirrel Images Asynchronously (10 points)</h3>
+
+<p>In the original app I’m giving you, the squirrel picture is just a
+generic squirrel icon. I want you to figure out how to load an image
+from the corresponding URL and put it into the squirrel picture.</p>
+
+<p>This part is mostly open-ended exploration on your part. I want you to
+figure out how to Google for the various things you need to get your
+work done, and then I want you to string them together to make the app
+work in the right way. Make sure that you download the image sent in
+the <em>intent</em> rather than just some fixed image (the image URL should
+be in the <code class="highlighter-rouge">picture</code> part of the intent object).</p>
+
+<p>This part took me a good hour or two: ten minutes to do it, and fifty
+minutes to debug what was going on.</p>
+
+<h3 id="part-7-integration-testing-5-points">Part 7: Integration Testing (5 points)</h3>
+
+<h3 id="part-8-add-something-5-points">Part 8: Add Something (5 points)</h3>
+
+<p>This part is worth five points. Add <em>something</em> to the app that
+requires at least ten lines of (Java, not XML) code to function. In
+other words, you can’t get credit for this part by just messing around
+with the app’s styling and appearance. Think of something you’d like
+to add, and add that to the app.</p>
+
+<p>To get full credit for this part, you must also add corresponding
+tests to show that the feature you wanted to add works.</p>
+
+<p>Write about what you did in the space below (do <em>not</em> email it to me,
+etc… I will only accept this for credit if you put it here. Aim to
+write 2-3 paragraphs at most, and point out the relevant parts of the
+code / tests).</p>
+
+<h1 id="grading">Grading</h1>
+
+<p>I will add up all of the points here, which constitute 80% of the
+grade. The remaining 20% of the grade is based on code style. For full
+code style, you need to have the following:</p>
+
+<ul>
+  <li>
+    <p>Good indentation, variable names, proper use of @Override, etc…</p>
+  </li>
+  <li>
+    <p>Thoughtful comments on all complex methods (more than three lines)
+that follows the JavaDoc conventions and specifies return values,
+relevant things (e.g., preconditions when you think they’re
+meaningful) to the method’s operation, which exceptions are thrown,
+etc.. You don’t have to follow a rote formula, and if in doubt,
+write less. I reserve the right to take off points if your
+documentation is way too verbose (programmers have limited time,
+make comments succinct and to the point) or out of date with the
+code (this is a big problem when writing docs, keep them up to
+date).</p>
+  </li>
+  <li>
+    <p>Tests for all of the important parts of your program. This includes
+both unit tests and integration (/instrumentation) tests. Tests
+should be both good and orthogonal: I will take off points if I see
+things like 20 tests that all cover the same behavior in the
+program. In my experience, new programmers have a bad habit: they
+tend to write too many tests for simple parts of the code (e.g.,
+getters), and they write too few tests for complex parts of their
+code. The number of tests you have should scale with the complexity
+of the code, which is not always related to its line
+count. Specifically <em>do not</em> write tests for very simple functions
+like getters and setters.</p>
+  </li>
+  <li>
+    <p>Avoid redundancy. If I see any code duplication, ever, I’m going to
+take off points. For example, in this assignment, I could have
+copied all of the code from <code class="highlighter-rouge">SquirrelIterator</code> to
+<code class="highlighter-rouge">SquirrelDoublyLinkedListIterator</code>, rather than extending the
+class. This is an example of redundant code. To understand why this
+is so important, think about what happens if you were to change
+<code class="highlighter-rouge">SquirrelIterator</code>: you’d likely also want to change
+<code class="highlighter-rouge">SquirrelDoublyLinkedListIterator</code> (since a
+<code class="highlighter-rouge">SquirrelDoublyLinkedList</code> extends from a <code class="highlighter-rouge">SquirrelList</code>). If you
+had to do this manually, it would be a bit frustrating, but it would
+be even worse if you <em>forgot</em> to do it. This is a frequent source of
+subtle bugs.</p>
+  </li>
+</ul>
+
+<p>Last, it’s hard to write apps that work. Testing your app to make sure
+it’s bullet-proof is important, but an often overlooked aspect by
+students. I want you to write code that works really well. The
+difference between “kind of working” code and “totally working” code
+is often pretty vast. So I will deduct 7% from your final grade if–at
+any point–I was able to observe a crash in the app. I’ll write you to
+explain the behavior.</p>
+
+<h1 id="rubric">Rubric</h1>
+
+<ul>
+  <li>Part 1 (X)/10</li>
+  <li>Part 2 (X)/15</li>
+  <li>Part 3 (X)/15</li>
+  <li>Part 4 (X)/15</li>
+  <li>Part 5 (X)/5</li>
+  <li>Part 6 (X)/10</li>
+  <li>Part 7 (X)/5</li>
+  <li>Part 8 (X)/5</li>
+  <li>Style:
+    <ul>
+      <li>(X)/5 Low-level things, variable names, indentation, proper annotations</li>
+      <li>(X)/5 Comments on relevant things, following proper javadoc convention</li>
+      <li>(X)/5 Proper testing (Yes, I will take off twice, it’s that important!)</li>
+      <li>(X)/5 Avoiding redundancy, thoughtful object-oriented design</li>
+    </ul>
+  </li>
+  <li>Total: 100</li>
+  <li>Adjustment factors:
+    <ul>
+      <li>You will lose 7% if I can figure out how to get your app to crash
+just by using it. I will be taking your app and playing around
+with it a bit. If–at any time as I run it–I see a crash (for any
+reason), you will lose 7% off your total grade.</li>
+      <li>+3% if you tackle an especially hard debugging challenge and
+<em>wrote a test</em> demonstrating the failure, and then fixed the
+problem. If you do this, write me an email. This is at my
+discretion. No points awarded (/ don’t email me) if you can’t
+figure out how to write a test that exhibits the behavior.</li>
+    </ul>
+  </li>
+</ul>
+
+<h1 id="questions-to-think-about">Questions to Think About</h1>
+
+<ul>
+  <li>When would using <code class="highlighter-rouge">protected</code> be advantageous, versus <code class="highlighter-rouge">private</code>?</li>
+</ul>
+
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    
+
+    <!-- <h2 class="footer-heading">CS395</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>CS395</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>CMSC 395 (Mobile Apps for Social Change) at Haverford College, Fall 2018</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+<script src=http://kmicinski.com//mobile-apps/bower_components/jquery/dist/jquery.min.js></script>
+<script src=http://kmicinski.com//mobile-apps/bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js></script>
+
+
+  </body>
+
+</html>

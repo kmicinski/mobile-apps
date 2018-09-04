@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Using the VM</title>
+  <meta name="description" content="For most of this course, I’m going to have you use a virtual machinerunning a light version of Linux. For the first project, you must doyour development on t...">
+
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/using-the-vm">
+  <link rel="alternate" type="application/rss+xml" title="CS107" href="http://localhost:4000/feed.xml">
+</head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href=http://localhost:4000/>CS107</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/assignments/">Assignments</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/blog/">Posts</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/resources">Resources</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/schedule/">Schedule</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/syllabus/">Syllabus</a>
+          
+        
+      </div>
+    </nav>
+
+  </div>
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Using the VM</h1>
+  </header>
+
+  <div class="post-content" itemprop="articleBody">
+    <p>For most of this course, I’m going to have you use a virtual machine
+running a light version of Linux. For the first project, you <em>must</em> do
+your development on this virtual machine, since parts of your exploit
+(namely: the starting address of the stack, and layout of functions)
+will depend on environment variables and size of the kernel.</p>
+
+<p>Follow the download link posted on Piazza for the course. If you’re an
+onlooker and want the link, email me (<code class="highlighter-rouge">kris@cs.haverford.edu</code>) and
+I’ll send you a link.</p>
+
+<p>The VM includes most of the tools (gcc, GDB, Make, etc..) you should
+need to be able to perform your work. I’ve also included a compiled
+copy of the EDB debugger, and a copy of the open-source reverse
+engineering toolkit <a href="https://github.com/radare/radare2">radare2</a>.</p>
+
+<p>The link will give you an <code class="highlighter-rouge">.ova</code> file. You need to use
+<a href="https://www.virtualbox.org/wiki/Downloads">VirtualBox</a> to open and
+run the VM. To load the VM, go to <code class="highlighter-rouge">File -&gt; Import Appliance</code>. Select
+the downloaded file and import it. The name of the VM should be
+<code class="highlighter-rouge">311test</code>.</p>
+
+<p>After that, you should see VirtualBox displaying something that looks
+like this:</p>
+
+<p><img style="width:400px; margin:auto" src="/assets/img/vboxmenu.png" /></p>
+
+<p>You should then be able to click on <code class="highlighter-rouge">start</code> over <code class="highlighter-rouge">311test</code>. This will
+open the machine, which runs linux. After that, the machine will boot
+up and allow you to log in.</p>
+
+<p>The username for the machine is <code class="highlighter-rouge">testvm</code>, and the password is also
+<code class="highlighter-rouge">testvm</code>. You can change the password if you want, but the machine is
+running inside your user account, so there’s not much harm in keeping
+it that way. (I.e., it is no less secure than your user account on
+your computer, which is already guarded with a password.)</p>
+
+<h2 id="logging-in-to-the-vm--doing-your-work">Logging In to the VM / doing your work</h2>
+
+<p>To log in to the VM, you can use the GUI. VirtualBox has several
+options for allowing you to use the virtual machine’s screen inside of
+your own computer. This is fine, but I <strong>recommend against
+it</strong>. Instead, I recommend you SSH into the VM from your local
+machine. This will allow you to use the terminal on your laptop to
+talk to the VM, which can then be minimized (i.e., you don’t have to
+see it, and it doesn’t take up space on your desktop). This allows you
+to do things like read the course webpage / project description as you
+work on your project.</p>
+
+<p>You can SSH into the machine from your local machine by using
+port 2222. In other words, on my mac:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh testvm@localhost -p 2222
+testvm@localhost's password:
+Welcome to Ubuntu 17.10 (GNU/Linux 4.13.0-25-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+
+74 packages can be updated.
+7 updates are security updates.
+
+Last login: Mon Jan 22 16:19:59 2018 from 10.0.2.2
+testvm@testvm:~$
+</code></pre></div></div>
+
+<p>You can see that I start off on <em>my</em> laptop, and in the end I’m
+talking to the virtual machine. If I want to quit and go back to the
+terminal on my computer, I can just type <code class="highlighter-rouge">exit</code>.</p>
+
+<p>If you use SSH on the machine and don’t care about having the GUI, you
+can turn off the machine’s GUI:
+<code class="highlighter-rouge">https://askubuntu.com/questions/151840/how-to-disable-gdm-from-being-automatically-started</code>
+This allows the VM to take up less memory so you have more available
+to do meaningful work.</p>
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    
+
+    <!-- <h2 class="footer-heading">CS107</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>CS107</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>CS107</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+<script src=http://localhost:4000/bower_components/jquery/dist/jquery.min.js></script>
+<script src=http://localhost:4000/bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js></script>
+
+
+  </body>
+
+</html>

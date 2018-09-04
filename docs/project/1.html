@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Project 1I: Basic Stack Smashing and Assembly</title>
+  <meta name="description" content="Please read the section at the bottom of this guide if you getstuck. Frequently asked questions are answered there!">
+
+  <link rel="stylesheet" href="http://localhost:4000/css/main.css">
+  <link rel="canonical" href="http://localhost:4000/project/1">
+  <link rel="alternate" type="application/rss+xml" title="CS107" href="http://localhost:4000/feed.xml">
+</head>
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href=http://localhost:4000/>CS107</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/assignments/">Assignments</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/blog/">Posts</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/resources">Resources</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/schedule/">Schedule</a>
+          
+        
+          
+          <a class="page-link" href="http://localhost:4000/syllabus/">Syllabus</a>
+          
+        
+      </div>
+    </nav>
+
+  </div>
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Project 1I: Basic Stack Smashing and Assembly</h1>
+    <h3><b>Project due date: <time datetime="2018-02-09T00:00:00-05:00">Feb 9,
+    2018 (5:59PM Eastern)</time></b></h3>
+  </header>
+
+  <div class="post-content writeup-content" itemprop="articleBody">
+    <p><strong>Please read the section at the bottom of this guide if you get
+stuck. Frequently asked questions are answered there!</strong></p>
+
+<p><strong>Caution!</strong> This code will be graded on the virtual machine for the
+course. Magic constants, like the position of the stack, are
+<strong>absolutely not</strong> portable across machines. Therefore, do your
+exploit-generation on the virtual machine for the course. <strong>No</strong>
+partial-credit will be given for solutions that work on your machine
+but not mine.</p>
+
+<p>In this project you’ll perform a set of basic exploits against a file
+server. The file server we build in this project will store files for
+the chat server we eventually build. For this project, you’ll mostly
+be concerned with merely using and exploiting the server, you
+shouldn’t have to write large amounts of C code.</p>
+
+<p>This portion of the project is individual work. During the course of
+this project you are allowed access to all online resources, but you
+are required to cite any resource that gave you any significant
+insight into the project, including conversations you had with your
+classmates. You will put these sources in <code class="highlighter-rouge">SOURCES.md</code> within this
+folder.</p>
+
+<p>Please respect the department’s collaboration policy. Specifically,
+you are not allowed to look at any other student’s <em>code</em> (or do
+anything equivalent, such as talking through your code on a
+line-by-line basis). You may discuss pseudo-code on the board, but
+afterwards you must erase it (so as to not let anyone else see it) and
+then cite your conversation with the other person in a comment in your
+code (and in the sources file).</p>
+
+<p><strong>If you get stuck, look at the hints / advice at the bottom of this
+guide.</strong></p>
+
+<h1 id="project-overview">Project Overview</h1>
+
+<p>The goal of this project is to teach you the following:</p>
+<ul>
+  <li>A refresher on C / assembly</li>
+  <li>An introduction to web protocols</li>
+  <li>Interacting with a server manually via <code class="highlighter-rouge">telnet</code></li>
+  <li>Writing socket-based programs in Python</li>
+  <li>Use GDB and other debuggers to understand program code</li>
+</ul>
+
+<p>You should first obtain the starter files for this project, perform a
+<code class="highlighter-rouge">git clone</code> of this project’s repository:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone github.com/security-course/file-server
+</code></pre></div></div>
+
+<p>The file server is contained in a file <code class="highlighter-rouge">server.c</code></p>
+
+<h1 id="collaboration-policy">Collaboration Policy</h1>
+
+<p>Specific examples that extend the collaboration policy for this lab:</p>
+
+<ul>
+  <li>
+    <p>It is okay to work through concepts on the board, but you <strong>may
+not</strong> give away <strong>any</strong> concrete addresses from the program (since
+finding these is part of the lab). Instead, use placeholder
+addresses when doing calculations with another student. E.g., you
+might say “Well, we realized that if the buffer is Y in length, and
+our shellcode is Z bytes long, we needed to insert X = Y-Z bytes of
+empty space after the shellcode”</p>
+  </li>
+  <li>
+    <p>Please discuss the tools you used with other students. For example,
+you may say “I used GDB’s <code class="highlighter-rouge">layout asm</code> to show the current
+instruction as I injected the shellcode.”</p>
+  </li>
+  <li>
+    <p>You may <strong>not</strong> look at another student’s screen or talk to someone
+at such a low level as to be looking at their screen in spirit.</p>
+  </li>
+</ul>
+
+<h1 id="structure-of-the-server-and-telnet-tutorial">Structure of the Server and <code class="highlighter-rouge">telnet</code> Tutorial</h1>
+
+<p>This assignment will have you launch an attack against a small server,
+which can serve–among other things–HTML and image files. The server
+is implemented in the file <code class="highlighter-rouge">server.c</code>.</p>
+
+<p>This server is woefully incomplete: it only implements a very tiny
+part of the HTTP–the exchange-format used between web-browsers and
+servers. And yet this server still implements enough of HTTP to be
+able to display static content.</p>
+
+<p>The word “server” is used all over the place in tech. For this
+assignment, a “server” means an application that can exchange data
+with a user on the other end of a communication channel (frequently
+called a “port”). You don’t need to understand networking to do this
+project, and you can largely follow this tutorial to complete the
+assignment.</p>
+
+<p>Begin by building the server:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make fs
+</code></pre></div></div>
+
+<p>This command builds the version of the server with all of the fancy
+modern protection mechanisms enabled, so it won’t be susceptible to
+(as many of) the attacks we’ll launch in this assignment.</p>
+
+<p>To run the server, type the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./fs "secret" "hello my message is here"
+</code></pre></div></div>
+
+<p>The server takes two arguments: the secret password, and a secret
+message. The server shouldn’t reveal this message to the user unless
+they send a command to the server to authenticate with the password
+(set on the command line here as <code class="highlighter-rouge">secret</code>).</p>
+
+<p>Now the server should be running on port 5000. This means that it’s
+listening for connections. To talk to the server, you can use the
+<code class="highlighter-rouge">telnet</code> program. To do this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>telnet localhost 5000
+</code></pre></div></div>
+
+<p>The first command-line argument is the server to connect to. This
+could be a remote host, like cnn.com, but in this case it’s going to
+be a special host named <code class="highlighter-rouge">localhost</code>, which is an alias for the IP
+address <code class="highlighter-rouge">127.0.0.1</code>. This is like talking to a remote machine, across
+the internet, except instead of talking to cnn.com, you’re talking to
+a server running your local machine.</p>
+
+<p>Once we’re connected, we can start sending the server commands:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>hello
+Hello!
+</code></pre></div></div>
+
+<p>When we type in “hello”, the server replies back with “Hello!.” The
+complete list of commands is documented below.</p>
+
+<p>This server also supports a form of HTTP, which is a standard format
+(protocol) used to exchange data between your web browser and the
+server itself. Think of the web browser as doing this same stuff that
+you’re typing into <code class="highlighter-rouge">telnet</code> in a specific way, except that it’s doing
+it using a program. To see this, open a web browser (inside of the VM,
+using the user interface) and point the address address bar at
+<code class="highlighter-rouge">localhost:5000</code>. Like navigating to <code class="highlighter-rouge">cnn.com</code>, the server sends the
+necessary commands to our server application to retrieve the page. You
+should be able to see the server application generating some logs as
+it does this, so you can see which files get requested.</p>
+
+<p>You can generate this yourself, after you telnet to the address, type
+in the following:</p>
+
+<p>Here’s the complete list of commands:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">hello</code>, replies back with <code class="highlighter-rouge">Hello!</code></li>
+  <li><code class="highlighter-rouge">goodbye</code>, terminates the connection</li>
+  <li><code class="highlighter-rouge">echo &lt;text&gt;</code>, replies back with “Server is echoing: “ followed by <text></text></li>
+  <li><code class="highlighter-rouge">setmsg &lt;msg&gt;</code>, sets a global variable in the server named <code class="highlighter-rouge">special_message</code></li>
+  <li><code class="highlighter-rouge">getmsg</code>, gets the special message set with <code class="highlighter-rouge">setmsg</code></li>
+  <li><code class="highlighter-rouge">authenticate &lt;tried_password&gt;</code>, authenticates the connection to
+with a password when <code class="highlighter-rouge">&lt;tried_password&gt;</code> matches the password set via
+command-line argument. Once the connection has been authenticated,
+it will reveal the “secret message”, which is also specified on the
+command line.</li>
+  <li><code class="highlighter-rouge">getsecret</code>, gets the secret, assuming the connection has been
+authenticated</li>
+  <li><code class="highlighter-rouge">shell</code>, starts a shell <em>on the server</em>, that can be typed into via
+the telnet connection (i.e., when you type into it, it’s actually a
+shell on the server).</li>
+  <li><code class="highlighter-rouge">get &lt;URI&gt; &lt;http-version&gt;</code> GETs a resource using the HTTP protocol.</li>
+</ul>
+
+<p>Here’s an example</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>authenticate secret
+You are now authenticated
+getsecret
+hello my message is here
+echo Hi, my name is Charles!
+Server is echoing: Hi, my name is Charles!
+getmsg
+Here is a special message
+shell
+</code></pre></div></div>
+
+<h2 id="more-resources">More resources</h2>
+
+<p>I expect you to be able to pick up and read through <code class="highlighter-rouge">server.c</code> on your
+own, and this is specifically part of the project. A large part of
+security (and software-engineering at large) is figuring out other
+people’s code. So work through it, and when you get stuck, play around
+with <code class="highlighter-rouge">telnet</code>. When you get confused, insert <code class="highlighter-rouge">logmsg</code> or <code class="highlighter-rouge">printf</code>
+statements, or (better yet) walk through it in the debugger.</p>
+
+<h3 id="notes-on-safety-ethics-and-realness">Notes on Safety, Ethics, and “Realness”</h3>
+
+<p>This server is written to be extremely insecure, and contains even
+more vulnerabilities than I discuss in this assignment. Running an
+insecure server is an easy way to get hacked, so system administrators
+typically use a
+<a href="https://en.wikipedia.org/wiki/Firewall_(computing)">firewall</a> to keep
+you from opening up servers on random ports and putting them out on
+the internet. For example, we have a firewall at Haverford that stops
+the server under my desk from sending talking to the rest of the
+internet.</p>
+
+<p>Finally, this part of the project is fairly unrealistic. I have added
+a ton of extra commands to the server to make it easier for you to
+understand and exploit. Exploiting a real web server would mean
+reading lots and lots of code to try to find a mistake. We will likely
+do that later in the course, but for now try not to worry too much
+about it. I’ve included the “GET” command in here to foreshadow the
+next part of the assignment: the group project involves
+collaboratively fleshing out the rest of this server and performing
+some attacks on it.</p>
+
+<h3 id="part-0-writing-in-c--assembly-and-using-gdb">Part 0: Writing in C / Assembly, and using GDB</h3>
+
+<p>For this part of the project, you will write a function in C that
+finds the maximum value in a list.</p>
+
+<p>The signature for the function:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Max gives the max of `num_ints`
+int max(int *ints, int num_ints);
+</code></pre></div></div>
+
+<h4 id="task-0a-coding-in-c-and-understanding-assembly">Task 0a: Coding in C and Understanding Assembly</h4>
+
+<p>Write and test this function (and <em>only</em> this function, no <code class="highlighter-rouge">main</code>
+function)in a file named <code class="highlighter-rouge">max.c</code>. Then compile the function into
+assembly-language form using the following command:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc -S max.c 
+</code></pre></div></div>
+
+<p>The result will be a file, <code class="highlighter-rouge">max.s</code>, which contains the
+assembly-language code for the project.</p>
+
+<p><strong>Deliverable</strong>: the file <code class="highlighter-rouge">max.s</code>, with comments.</p>
+
+<p>Comment the code with enough detail so that I can follow it along. For
+example, detail what each operation means, talks about where items
+will be laid out on the stack, what purpose each register serves,
+etc..</p>
+
+<p>Then answer the following questions in this document (right here in
+the README):</p>
+
+<p><strong>Deliverable</strong> the questions here</p>
+
+<p>Q1. Where is each of the arguments <code class="highlighter-rouge">ints</code> and <code class="highlighter-rouge">num_ints</code> passed (i.e.,
+in which register, on the stack, etc..)</p>
+
+<p>Q2. Describe in words or as an ASCII-art diagram, the stack layout at
+    the invocation of the function <code class="highlighter-rouge">max</code></p>
+
+<p>Q3. Where is each local variable stored in the function, specifically
+in relation to the base pointer?</p>
+
+<h4 id="task-0b-using-gdb">Task 0b: Using GDB</h4>
+
+<p>I have included a program, <code class="highlighter-rouge">max_main.c</code>, which will use your <code class="highlighter-rouge">max.s</code>
+file. To compile <code class="highlighter-rouge">max_main.c</code> in a way such that it can use your
+<code class="highlighter-rouge">max.s</code> code, first compile <code class="highlighter-rouge">max.s</code> from assembly to binary code:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc -c max.s
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">-c</code> tells gcc to <em>compile</em> the file to binary code, but not to
+<em>link</em> it. Linking is the process by which the compiler grabs up all
+of the different functions, including the <code class="highlighter-rouge">main</code> function, and splices
+them all together into a binary that you can actually run. But since
+<code class="highlighter-rouge">max.s</code> doesn’t <em>have</em> a main function, <code class="highlighter-rouge">gcc</code> can’t fully link it. Now
+you have a binary file <code class="highlighter-rouge">max.o</code>, which you can link with the <code class="highlighter-rouge">main</code>
+function in <code class="highlighter-rouge">max_main.c</code>. The following command compiles <code class="highlighter-rouge">max_main.c</code>
+and links it with <code class="highlighter-rouge">max.o</code>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc max.o max_main.c -o max
+</code></pre></div></div>
+
+<p>The output is now a file you can run named max.</p>
+
+<p>Read GDB’s documentation on the following commands:</p>
+
+<ul>
+  <li>
+    <p>The <code class="highlighter-rouge">x</code> command, which allows you to examine memory.</p>
+  </li>
+  <li>
+    <p>The <code class="highlighter-rouge">layout &lt;name&gt;</code> command, which allows you to interactively run
+the program</p>
+  </li>
+  <li>
+    <p>The <code class="highlighter-rouge">print</code> command, which allows you to print out values and
+memory.</p>
+  </li>
+  <li>
+    <p>The <code class="highlighter-rouge">set</code> command, which allows you to set memory.</p>
+  </li>
+  <li>
+    <p>The <code class="highlighter-rouge">info</code> command, and some of the things it can do (print stack
+frames / registers).</p>
+  </li>
+  <li>
+    <p>The <code class="highlighter-rouge">break</code> command, which allows you to set breakpoints.</p>
+  </li>
+</ul>
+
+<p>Answer the following questions:</p>
+
+<ul>
+  <li>
+    <p>How would you find the address of a program variable named <code class="highlighter-rouge">string</code>?</p>
+  </li>
+  <li>
+    <p>How would you set the integer value stored at address <code class="highlighter-rouge">0x10000000</code>
+to the value <code class="highlighter-rouge">0x23</code>?</p>
+  </li>
+  <li>
+    <p>How would you find out where the saved instruction pointer is
+stored?</p>
+  </li>
+  <li>
+    <p>How would you get GDB to disassemble the code starting at address
+<code class="highlighter-rouge">%rip+200</code> and ending at <code class="highlighter-rouge">%rip+400</code>?</p>
+  </li>
+</ul>
+
+<h3 id="part-1-crash-the-server">Part 1: Crash the Server</h3>
+
+<p>(From now on, make sure you use the <code class="highlighter-rouge">./fs_nsp_nnx</code> executable. This is
+the one that is vulnerable. <code class="highlighter-rouge">./fs</code> has full protection mechanisms
+turned on.)</p>
+
+<p>Consider the <code class="highlighter-rouge">handle_connection</code> function inside of of the <code class="highlighter-rouge">server</code>
+executable. The local variables for <code class="highlighter-rouge">handle_connection</code> will be laid
+out on the stack in order. The variable <code class="highlighter-rouge">string</code> is a fixed-length
+buffer, into which (because of the way the program is written) you can
+write more than 100 bytes. This opens up the possibility for a
+stack-smashing attack.</p>
+
+<p>When you get done, it should look like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Got a connection on port 5000, handling now.
+ffffe3a0
+Received some data!
+echo &lt;more stuff here&gt;
+Segmentation fault (core dumped)
+</code></pre></div></div>
+
+<h3 id="task-1a-drawing-the-stack">Task 1a: Drawing the Stack</h3>
+
+<p><em>Deliverable</em>: Draw <code class="highlighter-rouge">handler_connection</code>’s stack right after the line
+that checks <code class="highlighter-rouge">prefix("hello",buffer)</code>. You can do this on a piece of
+paper or in digitized form. Whatever you do, digitize it (either by
+taking a picture with your phone, scanner, etc..) and submit it as
+<code class="highlighter-rouge">stack-inside-echo.&lt;png/jpg&gt;</code>. I highly suggest you reconstruct this
+using GDB.</p>
+
+<p>Your image <strong>must include</strong> all of the relevant local variables for
+<code class="highlighter-rouge">handle_connection</code> at that point, and must show (at least) the
+position of the saved instruction pointer <code class="highlighter-rouge">%rip</code>.</p>
+
+<p><em>Bonus points</em>: You will get +1 bonus points if you can generate
+this image using <code class="highlighter-rouge">gdb</code>. However, you must make gdb print out enough of
+the stack to show the saved base pointer and return address.</p>
+
+<h4 id="hints-on-this-part">Hints on this part</h4>
+
+<p>Consider using the following GDB commands:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">info frame</code></li>
+  <li><code class="highlighter-rouge">info locals</code></li>
+  <li><code class="highlighter-rouge">print &lt;address-in-hex&gt;</code></li>
+  <li><code class="highlighter-rouge">print $rsp</code> / etc.. (for registers)</li>
+  <li><code class="highlighter-rouge">x/20xb &lt;address&gt;</code> / <code class="highlighter-rouge">x/20xb $rsp</code> / etc..
+    <ul>
+      <li>This says print the next 20 bytes starting at <code class="highlighter-rouge">&lt;address&gt;</code>, print
+them in hex (that’s what the <code class="highlighter-rouge">x</code> after 20 means), print them one
+byte at a time (that’s what the <code class="highlighter-rouge">b</code> means).</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Remember the stack grows down!</strong></p>
+
+<h3 id="task-1b-smashing-the-stack">Task 1b: Smashing the Stack</h3>
+
+<p>This program is insecure because it has a stupidly-obvious buffer
+overflow attack: the variable <code class="highlighter-rouge">string</code> in <code class="highlighter-rouge">handle_connection</code> is a
+buffer of size 100, but inputs of up to 1024 can be read into the
+larger (global) <code class="highlighter-rouge">buffer</code> variable. Figure out an input that could be
+sent to the server that would cause the return instruction pointer to
+be overwritten, so that–upon returning from <code class="highlighter-rouge">handle_connection</code>, the
+program would go to a nonsense location and the program would
+crash. (FYI: the reason why it would crash is that control flow would
+wander into an unmapped page, generating a segmentation fault.)</p>
+
+<p>Once you figure it out, run the server with the following parameters:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./server mypassword message
+</code></pre></div></div>
+
+<p>And then in another terminal telnet into the server to perform your
+attack.</p>
+
+<p>There’s one trickery here: after sending the <code class="highlighter-rouge">echo</code> command, the
+server will keep accepting input. Part of the assignment is to figure
+out how to handle that (it’s not hard once you step back and look at
+all of the available commands).</p>
+
+<p>Attach the output of the server here (showing that it crashes):</p>
+
+<p><strong>Deliverable</strong>: Copy and paste server output into 1b_server.txt</p>
+
+<p><strong>Deliverable</strong>: Copy and paste telnet input / output into 1b_telnet.txt</p>
+
+<h3 id="part-2-scripting-the-attack">Part 2: Scripting the Attack</h3>
+
+<p>Attacks can be complicated. You don’t want to have to literally sit and
+type your exploit into telnet. Especially as your attack gets more and
+more complicated. Instead, you’d like to use a higher-level language
+to script the attack. What’s more, sometimes we will need to generate
+binary data that’s not easy to type out in ASCII. Python will let us
+construct those payloads programmatically. For this and the next
+project, we’re going to write these scripts ourselves.</p>
+
+<p>I’ve included a simple script, <code class="highlighter-rouge">client.py</code>.</p>
+
+<p>Script your attack in the function <code class="highlighter-rouge">crash_server</code>. You might think to
+use the following Python socket functions:</p>
+
+<ul>
+  <li><a href="https://docs.python.org/3/library/socket.html#socket.socket.send"><code class="highlighter-rouge">send</code></a></li>
+  <li><a href="https://docs.python.org/3/library/socket.html#socket.socket.recv"><code class="highlighter-rouge">recv</code></a></li>
+</ul>
+
+<p>Among the others listed there. I encourage you to read a good amount
+of that page. For example, you could write <code class="highlighter-rouge">s.send("echo hello")</code> to
+send “echo hello” to the server. Note that the Python API takes care
+of some of the ceremony of doing things like writing the length.</p>
+
+<p><strong>Deliverable</strong>: the Python function <code class="highlighter-rouge">crash_server</code> inside
+<code class="highlighter-rouge">client.py</code>, which crashes the server.</p>
+
+<h4 id="hints-on-this-part-1">Hints on this part</h4>
+
+<p>One common scenario when writing exploit payloads is that we find
+ourselves writing some number of uninteresting bytes followed by
+(e.g.,) an address that you’d like to smash into <code class="highlighter-rouge">%rip</code>. This is
+because–to exploit a buffer overflow–we have to fill up the whole
+buffer. In these scenarios, it’s common to use a script to construct
+the payload. For example, you could write a script in Python to insert
+25 <code class="highlighter-rouge">A</code>s before the ultimate bytes <code class="highlighter-rouge">0x23, 0x42 0x43 0x22</code> (which might
+be the address you want to inject, etc..).</p>
+
+<ul>
+  <li>
+    <p><code class="highlighter-rouge">send</code> expects a byte string as argument. To turn a Python string
+into an array of bytes, use the following: <code class="highlighter-rouge">"echo ".encode()</code>.</p>
+  </li>
+  <li>
+    <p>If you want to represent a <em>single</em> byte, use b’\x23’, which
+represents the single byte containing the hex value 0x23.</p>
+  </li>
+  <li>
+    <p>For example, if you wanted to write the string containing the bytes
+0x23, 0x24, 0x57, and 0x42, in that order, you could write
+b’\x2e\x24\x57\x42’</p>
+  </li>
+  <li>
+    <p>You will probably want to want combine the string “echo “ with a
+sequence of bytes. To do this, you can simply add them together
+(since Python’s add is overloaded): “echo “.encode() + b’\x41’ * 23
+generates the ASCII for “echo “ (note the space), followed by the
+letter ‘A’ (ASCII-encoded) 23 times.</p>
+  </li>
+</ul>
+
+<h3 id="part-3-owning-control-flow">Part 3: Owning Control Flow</h3>
+
+<p>Craft an exploit that will force the program to print out “Hello,
+world!\n”. To do this, follow the same technique you did in parts 1
+and 2, but instead of making <code class="highlighter-rouge">%rip</code> become some nonsense value, make
+it the address of the function <code class="highlighter-rouge">hello_world</code>. That way, when the
+program returns from <code class="highlighter-rouge">handle_connection</code>, it will then go to
+<code class="highlighter-rouge">hello_world</code> instead.</p>
+
+<p><em>Deliverable</em>: write your exploit inside of the Python function
+<code class="highlighter-rouge">hello_world</code>.</p>
+
+<p>Notes:</p>
+
+<ul>
+  <li>It is <strong>totally okay</strong> if the server crashes after printing “Hello,
+world!”</li>
+</ul>
+
+<p>When you get done, the server should do something like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Hello, world!
+Illegal instruction (core dumped)
+</code></pre></div></div>
+
+<h4 id="hints-on-this-part-2">Hints on this part</h4>
+
+<p>Use GDB to manually figure out how to redirect control flow at
+first. This helps you get a feel for where things should be in memory,
+and you can draw them out on a whiteboard or on paper as you use
+GDB. It also helps you debug your exploit as you develop it.</p>
+
+<p>For example, here’s one run of the program where I tell GDB to show me
+what the contents of memory are around the current stack pointer
+(which I got via <code class="highlighter-rouge">info register esp</code>).</p>
+
+<p>The first thing I do is to ask where the current saved RIP is stored:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(gdb) info frame
+Stack level 0, frame at 0x7fff5fbff4e0:
+ rip = 0x100000e04 in foo; saved rip = 0x1500e0000
+ called by frame at 0x7fff5fbff4e8
+ Arglist at 0x7fff5fbff4d0, args:
+ Locals at 0x7fff5fbff4d0, Previous frame's sp is 0x7fff5fbff4e0
+ Saved registers:
+  rbp at 0x7fff5fbff4d0, rip at 0x7fff5fbff4d8
+</code></pre></div></div>
+
+<p>It tells us that the saved RIP is at <code class="highlighter-rouge">0x1500e0000</code>. This is the
+address we want to overwrite. Let’s find out where <code class="highlighter-rouge">helloWorld</code> is
+located:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(gdb) info address hello_world
+Symbol "hello_world" is at 0x100000e50 in a file compiled without debugging.
+</code></pre></div></div>
+
+<p>So we need to set the RIP to point to that address:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(gdb) set *(0x7fff5fbff4d8) = 0x100000e50
+</code></pre></div></div>
+
+<p>Now, let’s check that I got it right (I didn’t the first few times I
+did this..):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(gdb) info frame
+Stack level 0, frame at 0x7fff5fbff4e0:
+ rip = 0x100000e04 in foo; saved rip = 0x100000e50
+ called by frame at 0x7fff5fbff510
+ Arglist at 0x7fff5fbff4d0, args:
+ Locals at 0x7fff5fbff4d0, Previous frame's sp is 0x7fff5fbff4e0
+ Saved registers:
+  rbp at 0x7fff5fbff4d0, rip at 0x7fff5fbff4d8
+(gdb) info address helloWorld
+Symbol "helloWorld" is at 0x100000e50 in a file compiled without debugging.
+</code></pre></div></div>
+
+<p>Finally, let’s run it:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(gdb) continue
+Continuing.
+Successfully copied the input!
+Hello, world!
+&lt;Segfault&gt;
+</code></pre></div></div>
+
+<p>Now, your job is to create a payload that does this!</p>
+
+<p><strong>Caution!</strong></p>
+
+<ul>
+  <li>
+    <p>Remember, you’re on a little-endian machine. So if I give you the
+number 0xDEADBEEFDEADBEEF, it will be represented as
+0xEFBEADDEFEBEADDE.</p>
+  </li>
+  <li>
+    <p>The stack grows <strong>down</strong>!</p>
+  </li>
+</ul>
+
+<h3 id="part-4-executing-shellcode">Part 4: Executing Shellcode</h3>
+
+<p>Now you can control control-flow. Great. But say you want to run your
+<em>own</em> code. To do this, you need to inject some assembly code into
+your program, and then have <code class="highlighter-rouge">%rip</code> jump to the shellcode.</p>
+
+<p>Your task in this part is to inject the shellcode into the program
+(via the buffer overflow) and then jump to it. I have included a
+sample shellcode in the file <code class="highlighter-rouge">shellcode.c</code> (its assembly is given,
+too).</p>
+
+<p>For this part, do something like this:</p>
+
+<p>echo … a: shellcode here … smashed-rip-address</p>
+
+<p>Think about where the shellcode will be placed in memory (using GDB if
+you need), and make <code class="highlighter-rouge">%rip</code> navigate to that point in memory, thereby
+executing the shell.</p>
+
+<p><em>Deliverable</em>: write your shellcode injection in the Python function
+<code class="highlighter-rouge">inject_execute_shellcode</code></p>
+
+<h4 id="tip-on-this-part">Tip on This Part</h4>
+
+<p>You’re going to want to place your shellcode somewhere inside the
+buffer, and then smash the stack so that control flows back to
+wherever you placed that shellcode. Therefore, you need to figure out
+the position of the <code class="highlighter-rouge">string</code> variable. You can do this by attaching
+GDB to a running process: start up the server in one console window,
+and then in another type <code class="highlighter-rouge">ps -a | grep fs_nsp_nnx</code>. Look at the number
+in the first column. Then do <code class="highlighter-rouge">sudo gdp -p &lt;number&gt;</code> (enter <code class="highlighter-rouge">testvm</code>
+for the password). This will let you debug the server as it runs. You
+can then set a breakpoint inside of <code class="highlighter-rouge">handle_connection</code> and print out
+the location of the variable <code class="highlighter-rouge">string</code>.</p>
+
+<h3 id="bonus-shellcoding-part-5-leak-the-secret-from-the-server">(Bonus: Shellcoding) Part 5: Leak the Secret from the Server</h3>
+
+<p><strong>Note</strong>: This problem has been changed to bonus work. It is now worth
++2% bonus.</p>
+
+<p>The server implements some code to check that the user types in a
+proper <code class="highlighter-rouge">authenticate</code> command before allowing the secret message to be
+retrieved. E.g., if I simply telnet into the server and then type in
+<code class="highlighter-rouge">getsecret</code> I get the message: “You are not authenticated right now,
+first use the <code class="highlighter-rouge">authenticate</code> command.”</p>
+
+<p>Your job in this part is to figure out how to get the server to give
+me the secret message without typing in the password.</p>
+
+<p>You <strong>may</strong> discuss how to do this part with others at a high level.</p>
+
+<p><strong>Deliverable</strong>: the function <code class="highlighter-rouge">print_secret</code>, which prints the secret
+message from the server.</p>
+
+<h4 id="hints-on-this-part-3">Hints on this part</h4>
+
+<p>This part requires injecting some of your own shellcode that writes a
+nonzero value to the address of <code class="highlighter-rouge">is_authenticated</code>.</p>
+
+<h3 id="part-6-protecting-against-the-attacks">Part 6: Protecting Against the Attacks</h3>
+
+<p>The reason we were able to launch all of these attacks is due to the
+buffer overflow exploit in <code class="highlighter-rouge">handle_connection</code>. Modify <code class="highlighter-rouge">server.c</code> so
+that this attack goes away.</p>
+
+<p><em>Deliverable</em>: the file <code class="highlighter-rouge">server_fixed.c</code>, which is not susceptible to
+the same attacks given in parts 2 through 5.</p>
+
+<h3 id="challenge-problem-reverse-engineering-"><strong>Challenge Problem</strong>: Reverse Engineering (**)</h3>
+
+<p>This problem is worth +3% bonus.</p>
+
+<p>I have included a program, <code class="highlighter-rouge">challenge.o</code>, in binary-only form. Your
+job is to figure out how to run it in a way that causes it to print
+out “Hello, world!\n”. The program has been compiled without stack
+protection and will be run with ASLR disabled. You must show me the
+command-line arguments I can use to get it to work. But you must
+<em>also</em> show your work and tell me how you got there. Solutions that
+technically work but aren’t explained will receive no credit.</p>
+
+<p>This challenge problem is 2/3 stars, meaning it’s quite difficult, but
+not impossible. The task itself isn’t really any different than what
+you’ve done in this assignment. The main challenge is that you don’t
+have the code.</p>
+
+<p><strong>Hint</strong>: Use the debugger for interactive disassembly of this
+program. This will also help you figure out what address to
+target. Use a disassembler or reverse engineering toolkit.</p>
+
+<p><strong>Deliverable</strong>: <code class="highlighter-rouge">bonus.txt</code>, which describes the techniques and shows
+how to run the program to get it to print “Hello, world!”</p>
+
+<h3 id="challenge-problem-other-bugs-and-exploits-"><strong>Challenge problem</strong>: Other Bugs and Exploits (*)</h3>
+
+<p>Find any other bugs in this program that could lead to a security
+vulnerability: information-disclosure, denial-of-service,
+code-injection, etc.. This program has a good number of them.</p>
+
+<p>You can receive a maximum of 2% extra credit on this part. .5% for each
+vulnerability. However, I am the final arbiter of what constitutes a
+security vulnerability versus just a bug (that isn’t a vulnerability)
+and my decisions are final.</p>
+
+<p><strong>Deliverable</strong>: <code class="highlighter-rouge">other_bugs.txt</code>, which describes any other bugs you
+find.</p>
+
+<h2 id="deliverables">Deliverables</h2>
+
+<p><em>Note</em>: Deliverables will be accepted in no other format than those
+listed here. Specifically: if you write code that technically works,
+but does not fit the format the testing scripts expect, you will not
+receive points. Also note that <em>no partial credit</em> will be assigned
+throughout the course as a matter of policy, unless otherwise noted
+explicitly.</p>
+
+<p>Part 0: Writing in C / Assembly, and using GDB</p>
+<ul>
+  <li>[ ]/5 max.s, with comments</li>
+  <li>[ ]/5 Questions about GDB</li>
+</ul>
+
+<p>Part 1: Crash the server</p>
+<ul>
+  <li>[ ]/5 stack-inside-echo.&lt;png/jpg&gt;</li>
+  <li>[ ]/5 1b_server_output.txt and 1b_telnet.txt</li>
+</ul>
+
+<p>Part 2: Scripting the attack</p>
+<ul>
+  <li>[ ]/10 the function <code class="highlighter-rouge">crash_server</code></li>
+</ul>
+
+<p>Part 3: Owning control flow</p>
+<ul>
+  <li>[ ]/10 the function <code class="highlighter-rouge">hello_world</code></li>
+</ul>
+
+<p>Part 4: Executing shellcode</p>
+<ul>
+  <li>[ ]/10 the function <code class="highlighter-rouge">inject_execute_shellcode</code></li>
+</ul>
+
+<p>Part 6: Protecting against the attacks</p>
+<ul>
+  <li>[ ]/10 the file <code class="highlighter-rouge">server_fixed.c</code>, which is not susceptible to the
+attacks in parts 2-5.</li>
+</ul>
+
+<p>Total: [ ]/50</p>
+
+<p>Bonus parts:</p>
+<ul>
+  <li>[ ]/+3% Reverse engineering</li>
+  <li>[ ]/+2% Part 5: Leak the secret from the server</li>
+  <li>[ ]/+2% Other bugs and exploits you found in the server</li>
+</ul>
+
+<h2 id="constraints-and-advice-read-this-if-you-get-confused">Constraints and Advice (<strong>Read This if you Get Confused</strong>)</h2>
+
+<p>The solution to this project doesn’t involve very much code. But it’s
+still tricky. You have to carefully think about the location of
+variables as they get placed in the stack, heap, etc.. As you work
+through this project, it’s <em>crucial</em> to understand the layout of the
+program (stack, heap, instructions, etc..). When I wrote out the
+solutions to this project, I did so using both my whiteboard and GDB
+(attached to the process).</p>
+
+<ul>
+  <li>
+    <p>When you develop your exploits, use the vulnerable executable
+<code class="highlighter-rouge">./fs_nsp_nnx</code>. This is the one that has all of the traditional
+protection mechanisms (NX, stack canaries) turned <strong>off</strong>. Trying to
+exploit <code class="highlighter-rouge">./fs</code> will kill your program.</p>
+  </li>
+  <li>
+    <p>Make sure to turn off ASLR on your VM. My grading scripts will do so
+as well.</p>
+  </li>
+  <li>
+    <p>Do not call your program with <strong>any</strong> command-line arguments. My
+scripts will not do so and doing so will change your environment
+variables so that exploits are harder to make work (command-line
+arguments are stack allocated).</p>
+  </li>
+  <li>
+    <p>Make sure you attach GDB to the <strong>running</strong> process rather than
+using GDB directly. See <a href="https://stackoverflow.com/questions/17775186/buffer-overflow-works-in-gdb-but-not-without-it/17775966#17775966">this SO
+post</a>
+for details.</p>
+  </li>
+  <li>
+    <p>The program will not work when environment variables change, or if
+command-line arguments are passed in. I will not change the
+environment variables when running your program, and will not pass
+in any additional command-line arguments. We will see how to deal
+with this in subsequent lectures.</p>
+  </li>
+  <li>
+    <p>Do <strong>not</strong> modify <code class="highlighter-rouge">server.c</code>, you risk addresses of functions being
+different. For part six, make a <em>copy</em> (as stated in that part).</p>
+  </li>
+  <li>
+    <p>When trying to determine the locations of variables, be sure that
+you connect GDB to a <em>running process</em>. If you run the app under
+GDB, the location of the stack will be different because environment
+variable differences between GDB and the running process. See this
+page for details:
+http://www.mathyvanhoef.com/2012/11/common-pitfalls-when-writing-exploits.html</p>
+  </li>
+  <li>
+    <p>http://dirac.org/linux/gdb/06-Debugging_A_Running_Process.php</p>
+  </li>
+  <li>
+    <p>Use the program <code class="highlighter-rouge">objdump</code>, which will help you disassemble the
+file. For example, if you run <code class="highlighter-rouge">objdump -S fs_nsp_nnx &gt;out</code>, you can
+then open up the file <code class="highlighter-rouge">out</code> and find out where <code class="highlighter-rouge">handle_connection</code>
+is written to examine its source.</p>
+  </li>
+  <li>
+    <p>(Hex to decimal calculator, useful for calculating ranges of things)
+https://www.rapidtables.com/convert/number/hex-to-decimal.html?x=78</p>
+  </li>
+  <li>
+    <p>(How to modify memory using GDB)
+https://stackoverflow.com/questions/3305164/how-to-modify-memory-contents-using-gdb</p>
+  </li>
+  <li>
+    <p>(How to print memory using GDB)
+https://sourceware.org/gdb/onlinedocs/gdb/Memory.html</p>
+  </li>
+</ul>
+
+
+  </div>
+
+</article>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    
+
+    <!-- <h2 class="footer-heading">CS107</h2> -->
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>CS107</li>
+          <li><a href="mailto:"></a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>CS107</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+<script src=http://localhost:4000/bower_components/jquery/dist/jquery.min.js></script>
+<script src=http://localhost:4000/bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js></script>
+
+
+  </body>
+
+</html>
