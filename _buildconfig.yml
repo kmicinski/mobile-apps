@@ -1,0 +1,18 @@
+# Site settings
+title: "CS395"
+baseurl: "mobile-apps"
+url: "http://kmicinski.com/"
+description: "CMSC 395 (Mobile Apps for Social Change) at Haverford College, Fall 2018"
+permalink: pretty
+
+# Build settings
+#markdown: redcarpet
+
+# Build posts to appear in the future
+future: true
+
+defaults:
+  - scope:
+      path: "assets/img"
+    values:
+      image: true
