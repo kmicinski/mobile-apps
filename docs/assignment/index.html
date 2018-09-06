@@ -122,8 +122,6 @@ last few days.</p>
 
 <p>Good luck! I think this one will hopefully be a lot of fun.</p>
 
-<h3 id="part-0-getting-the-app-set-up-on-your-machine">Part 0: Getting the App Set Up on Your Machine</h3>
-
 <h3 id="part-1-fleshing-out-an-implementation-10-points">Part 1: Fleshing Out an Implementation (10 points)</h3>
 
 <p>For this part of the assignment, you will complete the implementation
@@ -157,7 +155,8 @@ iterator for the implementation of <code class="highlighter-rouge">SquirrelList<
 <p>I have written a <em>passing</em> test for the <code class="highlighter-rouge">remove function in the test
 suite for </code>SquirrelList<code class="highlighter-rouge">. It is called </code>list_removeLink`. However,
 despite my passing test, the function is still broken. I didn’t test
-enough of the behavior to reveal the bug.</p>
+enough of the behavior to reveal the bug (moral of the story: write
+good tests, and don’t expect your tests to cover everything).</p>
 
 <p>In this part of the assignment, your job is to sit and think hard
 about the implementaito of <code class="highlighter-rouge">remove</code> to decide why it is broken. Then,
@@ -251,9 +250,43 @@ single-links can also work on double links.</p>
 
 <h3 id="part-4-implementing-a-custom-adapter-with-an-observer-15-points">Part 4: Implementing a Custom Adapter With an Observer (15 points)</h3>
 
-<p>Right now, the implementation</p>
+<p>Right now, the app’s implementation relies upon
+<code class="highlighter-rouge">SquirrelArrayAdapter</code>, which uses an array to back the data. This is
+a common adapter for Android, and works well as long as your data fits
+into an array. But if you want to use a container other than an array,
+you can also write your own <em>custom</em> adapter.</p>
 
-<h3 id="part-5-a-task-to-parse-and-add-squirrels-10-points">Part 5: A Task to Parse and Add Squirrels (10 points)</h3>
+<p>For this part of the assignment, your task is to implement the custom
+adapter <code class="highlighter-rouge">SquirrelListAdapter</code>. You need to implement all of the
+methods in that class that I’ve currently left unimplemented. Many of
+them have standard implementations that should be a few lines.</p>
+
+<p>The major conceptual challenge in this part is implementing the
+methods <code class="highlighter-rouge">registerDataSetObserver</code> and
+<code class="highlighter-rouge">unregisterDataSetObserver</code>. These methods allow setting up an
+“observer” for the underlying list. In short, an observer is an object
+that is “watching” for updates from some other object. We’ll talk a
+little bit about these in class, but observers are useful when some
+object needs to be updated based on updates to another object. For
+example, as the underlying list is updated (e.g., by adding more
+squirrels, as you’ll do in Part 5), the Android framework needs to
+know to redraw the screen. One way to do this is to have the framework
+register an observer on the list. The list class must be adapted to
+hold a list of observers (e.g., as a member variable of type
+<code class="highlighter-rouge">List&lt;Observer&gt;</code>). Then, every time the list changes, it will go
+through and call each of the observers’ <code class="highlighter-rouge">.notify</code> methods to notify
+them that the list has changed and allow them to do some work. Your
+task here is to ensure that this works with Android’s
+<code class="highlighter-rouge">DataSetObserver</code> class.</p>
+
+<p>Many of the other methods are fairly routine, but you should take care
+to read the documentation and ensure you implement them correctly.</p>
+
+<p>This will mostly be all-or-nothing grading in terms of if you were
+able to get the various parts. I’ll <em>possibly</em> give some partial
+credit, but don’t expect too much.</p>
+
+<h3 id="part-5-a-task-to-download-parse-and-add-squirrels-15-points">Part 5: A Task to Download, Parse, and Add Squirrels (15 points)</h3>
 
 <p>In this part of the assignment, you’re going to leverage the observer
 that you wrote in the last part. The way we’ve written our adapter, it
@@ -289,6 +322,15 @@ write code that runs in the background without you having to make a
 thread explicitly. Tasks have some advantages that we’re not going to
 talk about quite yet.</p>
 
+<p>Start by reading the some of the following on asynctasks (I really
+recommend Mark Murphy’s book for this):</p>
+
+<ul>
+  <li>https://developer.android.com/reference/android/os/AsyncTask</li>
+  <li>https://www.journaldev.com/9708/android-asynctask-example-tutorial</li>
+  <li>https://stackoverflow.com/questions/9671546/asynctask-android-example</li>
+</ul>
+
 <p>Your task will download JSON data from a particular URL and “parse” it
 into Squirrel objects that will be added to the list of squirrels. The
 JSON that I’ll give you looks like this:</p>
@@ -304,9 +346,19 @@ JSON that I’ll give you looks like this:</p>
 </code></pre></div></div>
 
 <p>In other words, it’s an array (list) of JSON objects, each with a
-field for name, location, and picture.</p>
+field for name, location, and picture. You need to extend the task to
+programmatically download this JSON blob, parse it, and populate your
+<code class="highlighter-rouge">ListView</code> using the data you gleam from it. And it needs to work
+correctly: after loading the data into the list, you need to be able
+to click on it and see the right squirrel image (I’m using links to
+old images, though, so please do let me know if the links stop working
+and I’ll update the JSON!).</p>
 
-<h3 id="part-6-downloading-squirrel-images-asynchronously-10-points">Part 6: Downloading Squirrel Images Asynchronously (10 points)</h3>
+<p>In going about this, you’ll need to use the <code class="highlighter-rouge">org.json</code> API included in
+Android. If you want to add another library and use that instead, you
+should feel free to do so.</p>
+
+<h3 id="part-6-downloading-squirrel-images-asynchronously-5-points">Part 6: Downloading Squirrel Images Asynchronously (5 points)</h3>
 
 <p>In the original app I’m giving you, the squirrel picture is just a
 generic squirrel icon. I want you to figure out how to load an image
@@ -322,9 +374,7 @@ be in the <code class="highlighter-rouge">picture</code> part of the intent obje
 <p>This part took me a good hour or two: ten minutes to do it, and fifty
 minutes to debug what was going on.</p>
 
-<h3 id="part-7-integration-testing-5-points">Part 7: Integration Testing (5 points)</h3>
-
-<h3 id="part-8-add-something-5-points">Part 8: Add Something (5 points)</h3>
+<h3 id="part-7-add-something-5-points">Part 7: Add Something (5 points)</h3>
 
 <p>This part is worth five points. Add <em>something</em> to the app that
 requires at least ten lines of (Java, not XML) code to function. In
@@ -406,10 +456,9 @@ explain the behavior.</p>
   <li>Part 2 (X)/15</li>
   <li>Part 3 (X)/15</li>
   <li>Part 4 (X)/15</li>
-  <li>Part 5 (X)/5</li>
-  <li>Part 6 (X)/10</li>
+  <li>Part 5 (X)/15</li>
+  <li>Part 6 (X)/5</li>
   <li>Part 7 (X)/5</li>
-  <li>Part 8 (X)/5</li>
   <li>Style:
     <ul>
       <li>(X)/5 Low-level things, variable names, indentation, proper annotations</li>
@@ -437,9 +486,23 @@ figure out how to write a test that exhibits the behavior.</li>
 <h1 id="questions-to-think-about">Questions to Think About</h1>
 
 <ul>
-  <li>When would using <code class="highlighter-rouge">protected</code> be advantageous, versus <code class="highlighter-rouge">private</code>?</li>
+  <li>
+    <p>When would using <code class="highlighter-rouge">protected</code> be advantageous, versus <code class="highlighter-rouge">private</code>?</p>
+  </li>
+  <li>
+    <p>The function <code class="highlighter-rouge">registerDataSetObserver</code> allowed you to cleanly
+separate the implementation of the view updating (done by the
+Android framework) and the implementation of the underlying data
+model (the linked list). How does this help us in designing robust
+code? What would have happened if we had simply stuck the code to
+update the view inside of the <code class="highlighter-rouge">List</code> class? Would that be a good
+design? (Answer: No, because of separation-of-concerns)</p>
+  </li>
+  <li>
+    <p>If you had done this project over again, what unit test would you
+have written up front to make your life easier?</p>
+  </li>
 </ul>
-
 
   </div>
 
